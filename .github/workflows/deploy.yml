@@ -47,4 +47,3 @@ jobs:
           tags: |
             vogelcodes/portal-transp-worker:latest
             vogelcodes/portal-transp-worker:${{ github.sha }}
-</TEXT>

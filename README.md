@@ -23,14 +23,14 @@ Push para `main` → GitHub Actions → Docker Hub → Coolify (Pull)
 
 ## ⚙️ Variáveis de Ambiente
 
-| Variável | Descrição |
-|----------|-------------|
-| `SECRET_KEY` | Chave secreta da aplicação |
-| `POSTGRES_USER` | Usuário do banco |
-| `POSTGRES_PASSWORD` | Senha do banco |
-| `POSTGRES_DB` | Nome do banco |
-| `REDIS_URL` | URL do Redis |
-| `API_KEY_PORTAL` | Chave da API Portal da Transparência |
+| Variável            | Descrição                            |
+| ------------------- | ------------------------------------ |
+| `SECRET_KEY`        | Chave secreta da aplicação           |
+| `POSTGRES_USER`     | Usuário do banco                     |
+| `POSTGRES_PASSWORD` | Senha do banco                       |
+| `POSTGRES_DB`       | Nome do banco                        |
+| `REDIS_URL`         | URL do Redis                         |
+| `API_KEY_PORTAL`    | Chave da API Portal da Transparência |
 
 ## 🏃 Rodar Localmente
 
@@ -50,4 +50,3 @@ curl http://localhost:5000/health
 ├── docker-compose.yml  # Stack completa
 └── requirements.txt
 ```
-</TEXT>
