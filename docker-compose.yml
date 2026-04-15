@@ -31,7 +31,7 @@ services:
     depends_on:
       - redis
       - postgres
-    command: "celery -A src.tasks worker --loglevel=info"
+    command: "celery -E -A src.tasks worker --loglevel=info"
     environment:
       - "APP_ENV=${APP_ENV:-production}"
       - "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
