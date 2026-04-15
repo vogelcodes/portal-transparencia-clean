@@ -1,0 +1,53 @@
+# Portal da Transparência SaaS
+
+Sistema de monitoramento automatizado de contratos governamentais via Portal da Transparência do Governo Federal.
+
+## 🚀 Imagens Docker
+
+```
+vogelcodes/portal-transp-web:latest
+vogelcodes/portal-transp-worker:latest
+```
+
+## 📦 Stack
+
+- **Web**: Flask + Gunicorn
+- **Worker**: Celery
+- **Database**: PostgreSQL 16
+- **Cache**: Redis 7
+- **Deploy**: Coolify
+
+## 🔄 CI/CD
+
+Push para `main` → GitHub Actions → Docker Hub → Coolify (Pull)
+
+## ⚙️ Variáveis de Ambiente
+
+| Variável | Descrição |
+|----------|-------------|
+| `SECRET_KEY` | Chave secreta da aplicação |
+| `POSTGRES_USER` | Usuário do banco |
+| `POSTGRES_PASSWORD` | Senha do banco |
+| `POSTGRES_DB` | Nome do banco |
+| `REDIS_URL` | URL do Redis |
+| `API_KEY_PORTAL` | Chave da API Portal da Transparência |
+
+## 🏃 Rodar Localmente
+
+```bash
+docker-compose up -d
+curl http://localhost:5000/health
+```
+
+## 📁 Estrutura
+
+```
+├── src/
+│   ├── app.py          # Flask app
+│   └── tasks.py        # Celery tasks
+├── Dockerfile          # Web image
+├── Dockerfile.worker   # Worker image
+├── docker-compose.yml  # Stack completa
+└── requirements.txt
+```
+</TEXT>
