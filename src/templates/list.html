@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleção de Empenhos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function toggleAll(source) {
+            checkboxes = document.getElementsByName('selected_ids');
+            for (var i = 0, n = checkboxes.length; i < n; i++) {
+                checkboxes[i].checked = source.checked;
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Resultados da Busca</h1>
+            <a href="/" class="text-blue-600 hover:underline">Nova Busca</a>
+        </div>
+
+        <p class="mb-4 text-gray-600">Filtrando por: <strong>{{ pregao if pregao else 'Todos' }}</strong> | CNPJ: {{ cnpj }}</p>
+
+        <form action="/generate" method="POST">
+            <input type="hidden" name="pregao_filter" value="{{ pregao }}">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <input type="checkbox" onclick="toggleAll(this)" class="rounded text-blue-600 focus:ring-blue-500">
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Órgão Contratante</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for emp in empenhos %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <input type="checkbox" name="selected_ids" value="{{ emp.documento }}" checked class="rounded text-blue-600 focus:ring-blue-500">
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ emp.data }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                                <a href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ emp.documento }}" target="_blank" class="hover:underline">{{ emp.documentoResumido }}</a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">{{ emp.codigoOrgao }} - {{ emp.orgao }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">{{ emp.valor_fmt }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500 max-w-md truncate" title="{{ emp.observacao }}">{{ emp.observacao }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button type="submit"
+                    class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Gerar Relatório PDF
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
