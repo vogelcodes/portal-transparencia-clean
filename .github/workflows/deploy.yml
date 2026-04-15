@@ -53,6 +53,6 @@ jobs:
     steps:
       - name: Trigger Coolify Deploy
         run: |
-          curl -X GET "https://panel.vps-br.vogelcodes.com/api/v1/deploy?uuid=d8pf1vvdt7jg0wdg96thh62r&force=false" \
+          curl -X GET "https://panel.vps-br.vogelcodes.com/api/v1/deploy?uuid=d8pf1vvdt7jg0wdg96thh62r&force=true" \
             -H "Authorization: Bearer ${{ secrets.DEPLOY_TOKEN }}" \
             -H "Content-Type: application/json"
