@@ -2,6 +2,7 @@
 Portal da Transparência - SaaS
 """
 from flask import Flask, jsonify
+from src.tasks import celery
 import os
 
 app = Flask(__name__)

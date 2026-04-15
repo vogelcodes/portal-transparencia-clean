@@ -12,7 +12,7 @@ services:
       - "APP_ENV=${APP_ENV:-production}"
       - "SECRET_KEY=${SECRET_KEY}"
       - "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
-      - "REDIS_URL=${REDIS_URL:-redis://redis:6379/0}"
+      - "REDIS_URL=${REDIS_URL:-redis://redis:6379/6}"
       - "API_KEY_PORTAL=${API_KEY_PORTAL}"
     volumes:
       - "portal_uploads:/app/uploads"
