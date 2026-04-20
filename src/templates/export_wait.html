@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerando planilha ODS...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-8">
+    <div class="max-w-md w-full mx-auto bg-white rounded-lg shadow-md p-8 text-center">
+
+        <div id="loading">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mx-auto mb-6"></div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Gerando planilha ODS</h2>
+            <p class="text-gray-500 mb-2">Buscando dados dos empenhos no Portal da Transparência...</p>
+            <p class="text-sm text-gray-400" id="status-msg">Aguardando worker...</p>
+        </div>
+
+        <div id="ready" class="hidden">
+            <div class="text-green-500 mb-4">
+                <svg class="h-16 w-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Planilha pronta!</h2>
+            <a id="download-link" href="#"
+               class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                Baixar .ODS
+            </a>
+            <div class="mt-4">
+                <a href="/" class="text-sm text-gray-500 hover:underline">Nova busca</a>
+            </div>
+        </div>
+
+        <div id="error" class="hidden">
+            <div class="text-red-500 mb-4">
+                <svg class="h-16 w-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Erro ao gerar planilha</h2>
+            <p class="text-sm text-gray-500 mb-4" id="error-msg"></p>
+            <a href="/" class="text-blue-600 hover:underline text-sm">Voltar para busca</a>
+        </div>
+
+    </div>
+
+    <script>
+        const taskId = "{{ task_id }}";
+        let attempts = 0;
+        const maxAttempts = 150;
+
+        function poll() {
+            fetch(`/export/ods/status/${taskId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'SUCCESS') {
+                        const dlUrl = `/export/ods/download/${taskId}`;
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('ready').classList.remove('hidden');
+                        document.getElementById('download-link').href = dlUrl;
+                        window.location.href = dlUrl;
+                    } else if (data.status === 'FAILURE') {
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('error').classList.remove('hidden');
+                        document.getElementById('error-msg').textContent = data.error || 'Erro desconhecido.';
+                    } else {
+                        attempts++;
+                        document.getElementById('status-msg').textContent =
+                            `Status: ${data.status} (${attempts * 2}s)...`;
+                        if (attempts < maxAttempts) {
+                            setTimeout(poll, 2000);
+                        } else {
+                            document.getElementById('status-msg').textContent = 'Tempo esgotado. Tente novamente.';
+                        }
+                    }
+                })
+                .catch(() => {
+                    attempts++;
+                    if (attempts < maxAttempts) setTimeout(poll, 2000);
+                });
+        }
+
+        setTimeout(poll, 1500);
+    </script>
+</body>
+</html>

@@ -8,8 +8,10 @@ import secrets
 import hmac
 import json
 import time
+import jwt
 from base64 import urlsafe_b64encode, urlsafe_b64decode
 from collections import defaultdict
+from datetime import datetime, timezone
 
 
 def generate_salt() -> str:
@@ -127,3 +129,19 @@ class RateLimiter:
             remaining = self._lockout_until[identifier] - time.time()
             return max(0, int(remaining))
         return 0
+
+
+def generate_jwt(user_id: int, expires_at: datetime, secret_key: str) -> str:
+    payload = {
+        'user_id': user_id,
+        'exp': expires_at,
+        'iat': datetime.now(timezone.utc),
+    }
+    return jwt.encode(payload, secret_key, algorithm='HS256')
+
+
+def verify_jwt(token: str, secret_key: str):
+    try:
+        return jwt.decode(token, secret_key, algorithms=['HS256'])
+    except Exception:
+        return None

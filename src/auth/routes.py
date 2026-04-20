@@ -3,14 +3,15 @@ Authentication Routes
 """
 from flask import render_template, request, jsonify, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, current_user
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import re
 
 from src.auth import auth_bp
 from src.auth.models import User, UserSession
+from flask import current_app
 from src.auth.utils import (
     generate_salt, hash_password, verify_password,
-    generate_token, validate_password_strength,
+    generate_jwt, validate_password_strength,
     RateLimiter, sanitize_username, sanitize_email
 )
 from src.db import db
@@ -71,7 +72,7 @@ def register():
             email=sanitize_email(email),
             salt=salt,
             password_hash=password_hash,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             is_active=True,
             role='user'
         )
@@ -147,10 +148,10 @@ def login():
     
     rate_limiter.record_success(identifier)
     
-    user.last_login = datetime.utcnow()
-    
-    token = generate_token()
-    expires_at = datetime.utcnow() + timedelta(hours=24 if not remember_me else 30*24)
+    user.last_login = datetime.now(timezone.utc)
+
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=24 if not remember_me else 30*24)
+    token = generate_jwt(user.id, expires_at, current_app.config['SECRET_KEY'])
     
     session_obj = UserSession(
         user_id=user.id,
@@ -272,7 +273,7 @@ def refresh_session():
     
     session_obj = UserSession.query.filter_by(token=token).first()
     if session_obj:
-        session_obj.expires_at = datetime.utcnow() + timedelta(hours=24)
+        session_obj.expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
         db.session.commit()
         return jsonify({'message': 'Session refreshed', 'expires_at': session_obj.expires_at.isoformat()})
     
