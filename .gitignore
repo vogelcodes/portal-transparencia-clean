@@ -9,3 +9,4 @@ venv/
 .DS_Store
 _old/
 app/
+.env.local

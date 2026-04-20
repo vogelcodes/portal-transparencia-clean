@@ -2,7 +2,6 @@ from celery import Celery
 import os
 import io
 import base64
-import time
 from datetime import datetime
 
 from odf.opendocument import OpenDocumentSpreadsheet
@@ -49,7 +48,7 @@ def _parse_br_money(s):
 @celery.task(name="fetch_search_results")
 def fetch_search_results(search_id):
     from src.app import app
-    from src.portal_api import get_empenhos_list, get_empenho_details, get_rate_limit_delay
+    from src.portal_api import get_empenhos_list, get_empenho_details
     from src.auth.models import Search, SearchResult
     from src.db import db
 
@@ -85,7 +84,6 @@ def fetch_search_results(search_id):
                 if existing:
                     continue
                 details = get_empenho_details(doc) or {}
-                time.sleep(get_rate_limit_delay())
                 merged = {**emp, **{k: v for k, v in details.items() if v is not None}}
                 sr = SearchResult(
                     search_id=search.id,
