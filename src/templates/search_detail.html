@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca #{{ search.id }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+<div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">{{ search.name or ('Busca #' ~ search.id) }}</h1>
+            <p class="text-sm text-gray-500">CNPJ: {{ search.cnpj }} | Filtro: <strong>{{ search.pregao_filter or 'Todos' }}</strong></p>
+        </div>
+        <div class="flex gap-3 items-center">
+            <span id="status-badge" class="px-3 py-1 rounded text-xs bg-yellow-100 text-yellow-800">{{ search.status }}</span>
+            <a href="/searches" class="text-sm text-blue-600 hover:underline">Minhas buscas</a>
+            <a href="/" class="text-sm text-blue-600 hover:underline">Nova busca</a>
+        </div>
+    </div>
+
+    {% if search.error %}
+    <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{{ search.error }}</div>
+    {% endif %}
+
+    <div class="mb-4 flex gap-3">
+        <form method="POST" action="/searches/{{ search.id }}/refresh">
+            <button class="px-4 py-2 rounded-md text-sm font-medium text-white bg-gray-600 hover:bg-gray-700">Re-buscar na API</button>
+        </form>
+        <form method="POST" action="/searches/{{ search.id }}/export/ods">
+            <button class="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Exportar .ODS (incluídos)</button>
+        </form>
+    </div>
+
+    <div id="empty" class="{% if results %}hidden{% endif %} text-gray-500 py-8 text-center">
+        {% if search.status in ('pending', 'fetching') %}
+        <div class="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-600 mx-auto mb-3"></div>
+        Buscando empenhos…
+        {% else %}
+        Nenhum resultado.
+        {% endif %}
+    </div>
+
+    <div class="overflow-x-auto {% if not results %}hidden{% endif %}" id="results-wrap">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Incluir</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Documento</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Órgão</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Valor</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Descrição</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {% for r in results %}
+                <tr class="hover:bg-gray-50" data-rid="{{ r.id }}">
+                    <td class="px-4 py-3">
+                        <input type="checkbox" class="toggle-included rounded text-blue-600" data-rid="{{ r.id }}"
+                               {% if r.included %}checked{% endif %}>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600">{{ r.data.strftime('%d/%m/%Y') if r.data else '—' }}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-blue-600">
+                        <a href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ r.documento }}" target="_blank" class="hover:underline">{{ r.documento_resumido or r.documento }}</a>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ r.codigo_orgao or '' }} - {{ r.orgao or '' }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900 font-bold">
+                        {% if r.valor is not none %}R$ {{ '{:,.2f}'.format(r.valor|float).replace(',', 'X').replace('.', ',').replace('X', '.') }}{% else %}—{% endif %}
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-500 max-w-md truncate" title="{{ r.observacao }}">{{ r.observacao }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const searchId = {{ search.id }};
+    const initialStatus = "{{ search.status }}";
+
+    document.querySelectorAll('.toggle-included').forEach(cb => {
+        cb.addEventListener('change', async () => {
+            const rid = cb.dataset.rid;
+            try {
+                await fetch(`/searches/${searchId}/results/${rid}`, {
+                    method: 'PATCH',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({included: cb.checked})
+                });
+            } catch (e) { cb.checked = !cb.checked; }
+        });
+    });
+
+    if (initialStatus === 'pending' || initialStatus === 'fetching') {
+        const badge = document.getElementById('status-badge');
+        const poll = async () => {
+            try {
+                const r = await fetch(`/searches/${searchId}/status`);
+                const j = await r.json();
+                badge.textContent = j.status;
+                if (j.status === 'done' || j.status === 'error') {
+                    location.reload();
+                    return;
+                }
+            } catch (e) {}
+            setTimeout(poll, 3000);
+        };
+        setTimeout(poll, 2000);
+    }
+</script>
+</body>
+</html>

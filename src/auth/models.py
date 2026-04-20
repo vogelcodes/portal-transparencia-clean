@@ -3,6 +3,7 @@ User Models for Authentication
 """
 from datetime import datetime
 from flask_login import UserMixin
+from sqlalchemy.dialects.postgresql import JSONB
 from src.db import db
 
 
@@ -67,3 +68,62 @@ class ApiKey(db.Model):
     
     def __repr__(self):
         return f'<ApiKey {self.id} for User {self.user_id}>'
+
+
+class Search(db.Model):
+    __tablename__ = 'searches'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    name = db.Column(db.String(200))
+    cnpj = db.Column(db.String(20), nullable=False)
+    pregao_filter = db.Column(db.String(200))
+    status = db.Column(db.String(20), default='pending', nullable=False)
+    error = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    results = db.relationship(
+        'SearchResult',
+        backref='search',
+        lazy='dynamic',
+        cascade='all, delete-orphan',
+        order_by='SearchResult.data.desc()',
+    )
+
+    def __repr__(self):
+        return f'<Search {self.id} u={self.user_id} {self.status}>'
+
+
+class SearchResult(db.Model):
+    __tablename__ = 'search_results'
+
+    id = db.Column(db.Integer, primary_key=True)
+    search_id = db.Column(db.Integer, db.ForeignKey('searches.id', ondelete='CASCADE'),
+                          nullable=False, index=True)
+    documento = db.Column(db.String(100), nullable=False)
+    documento_resumido = db.Column(db.String(100))
+    data = db.Column(db.Date)
+    valor = db.Column(db.Numeric(15, 2))
+    orgao = db.Column(db.String(200))
+    codigo_orgao = db.Column(db.String(20))
+    ug = db.Column(db.String(200))
+    codigo_ug = db.Column(db.String(20))
+    numero_processo = db.Column(db.String(100))
+    observacao = db.Column(db.Text)
+    categoria = db.Column(db.String(200))
+    grupo = db.Column(db.String(200))
+    elemento = db.Column(db.String(200))
+    included = db.Column(db.Boolean, default=True, nullable=False)
+    raw_json = db.Column(JSONB)
+    detail_json = db.Column(JSONB)
+    enrichment_json = db.Column(JSONB)
+    enriched_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('search_id', 'documento', name='uq_search_doc'),
+    )
+
+    def __repr__(self):
+        return f'<SearchResult {self.id} doc={self.documento}>'

@@ -1,23 +1,17 @@
 """
 Portal da Transparência - SaaS
 """
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
-from flask_login import LoginManager
-import time
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort
+from flask_login import LoginManager, current_user
 import io
 import base64
 import os
-from datetime import datetime
 
-from src.tasks import celery, generate_ods_task
+from src.tasks import generate_ods_task, fetch_search_results
 from src.db import db
 from src.auth import auth_bp
-from src.auth.models import User
+from src.auth.models import User, Search, SearchResult
 from src.auth.decorators import require_auth
-from src.portal_api import (
-    get_empenhos_list, get_empenho_details,
-    format_currency, format_date, get_rate_limit_delay
-)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
@@ -29,14 +23,23 @@ db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 app.register_blueprint(auth_bp)
 
 
-# === API Routes ===
+@app.cli.command('init-db')
+def init_db_command():
+    """Create all tables."""
+    db.create_all()
+    print("DB initialized.")
+
+
+# === Health ===
 
 @app.route('/health')
 def health():
@@ -52,7 +55,7 @@ def info():
     })
 
 
-# === App UI Routes ===
+# === UI ===
 
 @app.route('/', methods=['GET'])
 @require_auth
@@ -60,91 +63,122 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/search', methods=['POST'])
+# === Searches ===
+
+def _owned_search_or_404(search_id):
+    s = Search.query.get_or_404(search_id)
+    if s.user_id != current_user.id:
+        abort(404)
+    return s
+
+
+@app.route('/searches', methods=['GET'])
 @require_auth
-def search():
-    cnpj = request.form.get('cnpj')
-    pregao = request.form.get('pregao')
+def searches_list():
+    items = (Search.query
+             .filter_by(user_id=current_user.id)
+             .order_by(Search.created_at.desc())
+             .all())
+    return render_template('searches.html', searches=items)
 
-    current_year = datetime.now().year
-    years = sorted(list(set([2024, 2025, current_year])), reverse=True)
 
-    empenhos = []
-    for y in years:
-        empenhos.extend(get_empenhos_list(cnpj, y))
-
-    filtered = []
-    for emp in empenhos:
-        obs = emp.get('observacao', '')
-        if not pregao or pregao in obs:
-            emp['valor_fmt'] = format_currency(emp.get('valor', 0))
-            filtered.append(emp)
-
-    filtered.sort(
-        key=lambda x: datetime.strptime(x.get('data', '01/01/2000'), '%d/%m/%Y'),
-        reverse=True
+@app.route('/searches', methods=['POST'])
+@require_auth
+def searches_create():
+    cnpj = (request.form.get('cnpj') or '').strip()
+    pregao = (request.form.get('pregao') or '').strip()
+    name = (request.form.get('name') or '').strip() or None
+    if not cnpj:
+        return "CNPJ obrigatório", 400
+    s = Search(
+        user_id=current_user.id,
+        name=name,
+        cnpj=cnpj,
+        pregao_filter=pregao or None,
+        status='pending',
     )
+    db.session.add(s)
+    db.session.commit()
+    fetch_search_results.delay(s.id)
+    return redirect(url_for('searches_detail', search_id=s.id))
 
-    return render_template('list.html', empenhos=filtered, cnpj=cnpj, pregao=pregao)
 
-
-@app.route('/generate', methods=['POST'])
+@app.route('/searches/<int:search_id>', methods=['GET', 'POST', 'DELETE'])
 @require_auth
-def generate():
-    selected_ids = request.form.getlist('selected_ids')
-    detailed_empenhos = []
-    total_value = 0
-    pregao_filter = request.form.get('pregao_filter', '')
-
-    for doc_id in selected_ids:
-        details = get_empenho_details(doc_id)
-        if details:
-            if 'documento' not in details:
-                details['documento'] = doc_id
-            try:
-                val_str = details.get('valor', '0').replace('.', '').replace(',', '.')
-                total_value += float(val_str)
-            except Exception:
-                pass
-            detailed_empenhos.append(details)
-        time.sleep(get_rate_limit_delay())
-
-    detailed_empenhos.sort(
-        key=lambda x: datetime.strptime(x.get('data', '01/01/2000'), '%d/%m/%Y'),
-        reverse=True
+def searches_detail(search_id):
+    s = _owned_search_or_404(search_id)
+    is_delete = request.method == 'DELETE' or (
+        request.method == 'POST' and request.form.get('_method') == 'DELETE'
     )
-
-    return render_template(
-        'report.html',
-        empenhos=detailed_empenhos,
-        total_value=format_currency(total_value),
-        count=len(detailed_empenhos),
-        now=datetime.now().strftime('%d/%m/%Y às %H:%M'),
-        pregao_filter=pregao_filter,
-        format_currency=format_currency,
-        format_date=format_date,
-        str=str
-    )
+    if is_delete:
+        db.session.delete(s)
+        db.session.commit()
+        if request.method == 'DELETE':
+            return '', 204
+        return redirect(url_for('searches_list'))
+    if request.method == 'POST':
+        abort(405)
+    results = s.results.all()
+    return render_template('search_detail.html', search=s, results=results)
 
 
-@app.route('/export/ods', methods=['POST'])
+@app.route('/searches/<int:search_id>/status', methods=['GET'])
 @require_auth
-def export_ods():
-    selected_ids = request.form.getlist('selected_ids')
-    pregao_filter = request.form.get('pregao_filter', '')
-    task = generate_ods_task.delay(selected_ids, pregao_filter)
-    return redirect(url_for('export_ods_wait', task_id=task.id))
+def searches_status(search_id):
+    s = _owned_search_or_404(search_id)
+    return jsonify({
+        'status': s.status,
+        'count': s.results.count(),
+        'error': s.error,
+    })
 
 
-@app.route('/export/ods/wait/<task_id>')
+@app.route('/searches/<int:search_id>/refresh', methods=['POST'])
 @require_auth
-def export_ods_wait(task_id):
-    return render_template('export_wait.html', task_id=task_id)
+def searches_refresh(search_id):
+    s = _owned_search_or_404(search_id)
+    s.status = 'pending'
+    s.error = None
+    db.session.commit()
+    fetch_search_results.delay(s.id)
+    return redirect(url_for('searches_detail', search_id=s.id))
 
 
-@app.route('/export/ods/status/<task_id>')
+@app.route('/searches/<int:search_id>/results/<int:rid>', methods=['PATCH'])
 @require_auth
-def export_ods_status(task_id):
+def searches_toggle_result(search_id, rid):
+    s = _owned_search_or_404(search_id)
+    r = SearchResult.query.filter_by(id=rid, search_id=s.id).first_or_404()
+    data = request.get_json(silent=True) or {}
+    if 'included' in data:
+        r.included = bool(data['included'])
+    else:
+        r.included = not r.included
+    db.session.commit()
+    return jsonify({'id': r.id, 'included': r.included})
+
+
+# === ODS Export ===
+
+@app.route('/searches/<int:search_id>/export/ods', methods=['POST'])
+@require_auth
+def export_ods(search_id):
+    s = _owned_search_or_404(search_id)
+    task = generate_ods_task.delay(s.id)
+    return redirect(url_for('export_ods_wait', search_id=s.id, task_id=task.id))
+
+
+@app.route('/searches/<int:search_id>/export/ods/wait/<task_id>')
+@require_auth
+def export_ods_wait(search_id, task_id):
+    _owned_search_or_404(search_id)
+    return render_template('export_wait.html', task_id=task_id, search_id=search_id)
+
+
+@app.route('/searches/<int:search_id>/export/ods/status/<task_id>')
+@require_auth
+def export_ods_status(search_id, task_id):
+    _owned_search_or_404(search_id)
     result = generate_ods_task.AsyncResult(task_id)
     if result.state == 'SUCCESS':
         return jsonify({'status': 'SUCCESS'})
@@ -153,12 +187,13 @@ def export_ods_status(task_id):
     return jsonify({'status': result.state})
 
 
-@app.route('/export/ods/download/<task_id>')
+@app.route('/searches/<int:search_id>/export/ods/download/<task_id>')
 @require_auth
-def export_ods_download(task_id):
+def export_ods_download(search_id, task_id):
+    _owned_search_or_404(search_id)
     result = generate_ods_task.AsyncResult(task_id)
     if result.state != 'SUCCESS':
-        return redirect(url_for('export_ods_wait', task_id=task_id))
+        return redirect(url_for('export_ods_wait', search_id=search_id, task_id=task_id))
     data = result.get()
     buf = io.BytesIO(base64.b64decode(data['ods_b64']))
     buf.seek(0)
