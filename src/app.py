@@ -35,9 +35,6 @@ def load_user(user_id):
 
 app.register_blueprint(auth_bp)
 
-with app.app_context():
-    db.create_all()
-
 
 # === API Routes ===
 
