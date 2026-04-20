@@ -1,12 +1,17 @@
 """
 Portal da Transparência - SaaS
 """
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import requests
 import time
+import io
 from datetime import datetime
 from src.tasks import celery
 import os
+from odf.opendocument import OpenDocumentSpreadsheet
+from odf.style import Style, TextProperties, TableCellProperties
+from odf.text import P
+from odf.table import Table, TableColumn, TableRow, TableCell
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
@@ -190,6 +195,109 @@ def generate():
                            str=str)
 
     return html
+
+
+@app.route('/export/ods', methods=['POST'])
+def export_ods():
+    selected_ids = request.form.getlist('selected_ids')
+    pregao_filter = request.form.get('pregao_filter', '')
+
+    detailed_empenhos = []
+    for doc_id in selected_ids:
+        details = get_empenho_details(doc_id)
+        if details:
+            if 'documento' not in details:
+                details['documento'] = doc_id
+            detailed_empenhos.append(details)
+        time.sleep(get_rate_limit_delay())
+
+    detailed_empenhos.sort(
+        key=lambda x: datetime.strptime(x.get('data', '01/01/2000'), '%d/%m/%Y'),
+        reverse=True
+    )
+
+    doc = OpenDocumentSpreadsheet()
+
+    header_style = Style(name="HeaderCell", family="table-cell")
+    header_style.addElement(TextProperties(fontweight="bold"))
+    header_style.addElement(TableCellProperties(backgroundcolor="#2c3e50"))
+    doc.automaticstyles.addElement(header_style)
+
+    table = Table(name="Empenhos")
+
+    columns = ["Data", "Documento", "Unidade Gestora", "Órgão", "Valor (R$)",
+               "Número do Processo", "Descrição", "Categoria", "Grupo", "Elemento"]
+    for _ in columns:
+        table.addElement(TableColumn())
+
+    header_row = TableRow()
+    for col_name in columns:
+        cell = TableCell(valuetype="string", stylename="HeaderCell")
+        cell.addElement(P(text=col_name))
+        header_row.addElement(cell)
+    table.addElement(header_row)
+
+    total = 0.0
+    for emp in detailed_empenhos:
+        row = TableRow()
+
+        def add_cell(val):
+            c = TableCell(valuetype="string")
+            c.addElement(P(text=str(val) if val is not None else ""))
+            row.addElement(c)
+
+        add_cell(emp.get('data', ''))
+        add_cell(emp.get('documentoResumido') or emp.get('documento', ''))
+        add_cell(f"{emp.get('codigoUg', '')} - {emp.get('ug', '')}")
+        add_cell(f"{emp.get('codigoOrgao', '')} - {emp.get('orgao', '')}")
+
+        val_raw = emp.get('valor', '0')
+        try:
+            val_float = float(str(val_raw).replace('.', '').replace(',', '.'))
+            total += val_float
+            val_str = f"{val_float:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        except Exception:
+            val_str = str(val_raw)
+        add_cell(val_str)
+
+        add_cell(emp.get('numeroProcesso', ''))
+        add_cell(emp.get('observacao', ''))
+        add_cell(emp.get('categoria', ''))
+        add_cell(emp.get('grupo', ''))
+        add_cell(emp.get('elemento', ''))
+
+        table.addElement(row)
+
+    blank_row = TableRow()
+    for _ in columns:
+        blank_row.addElement(TableCell())
+    table.addElement(blank_row)
+
+    total_row = TableRow()
+    total_label = TableCell(valuetype="string")
+    total_label.addElement(P(text="TOTAL"))
+    total_row.addElement(total_label)
+    for _ in range(3):
+        total_row.addElement(TableCell())
+    total_val_cell = TableCell(valuetype="string")
+    total_fmt = f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    total_val_cell.addElement(P(text=total_fmt))
+    total_row.addElement(total_val_cell)
+    table.addElement(total_row)
+
+    doc.spreadsheet.addElement(table)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+
+    filename = f"empenhos_{pregao_filter or 'todos'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ods"
+    return send_file(
+        buf,
+        mimetype='application/vnd.oasis.opendocument.spreadsheet',
+        as_attachment=True,
+        download_name=filename
+    )
 
 
 if __name__ == '__main__':
