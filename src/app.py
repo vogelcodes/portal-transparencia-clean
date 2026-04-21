@@ -7,7 +7,7 @@ import io
 import base64
 import os
 
-from src.tasks import generate_ods_task, fetch_search_results, fetch_enrichment
+from src.tasks import generate_ods_task, generate_xlsx_task, generate_csv_task, fetch_search_results, fetch_enrichment
 from src.db import db
 from src.auth import auth_bp
 from src.auth.models import User, Search, SearchResult
@@ -225,6 +225,100 @@ def export_ods_download(search_id, task_id):
     return send_file(
         buf,
         mimetype='application/vnd.oasis.opendocument.spreadsheet',
+        as_attachment=True,
+        download_name=data['filename']
+    )
+
+
+# === XLSX Export ===
+
+@app.route('/searches/<int:search_id>/export/xlsx', methods=['POST'])
+@require_auth
+def export_xlsx(search_id):
+    s = _owned_search_or_404(search_id)
+    task = generate_xlsx_task.delay(s.id)
+    return redirect(url_for('export_xlsx_wait', search_id=s.id, task_id=task.id))
+
+
+@app.route('/searches/<int:search_id>/export/xlsx/wait/<task_id>')
+@require_auth
+def export_xlsx_wait(search_id, task_id):
+    _owned_search_or_404(search_id)
+    return render_template('export_wait.html', task_id=task_id, search_id=search_id, export_type='xlsx')
+
+
+@app.route('/searches/<int:search_id>/export/xlsx/status/<task_id>')
+@require_auth
+def export_xlsx_status(search_id, task_id):
+    _owned_search_or_404(search_id)
+    result = generate_xlsx_task.AsyncResult(task_id)
+    if result.state == 'SUCCESS':
+        return jsonify({'status': 'SUCCESS'})
+    if result.state == 'FAILURE':
+        return jsonify({'status': 'FAILURE', 'error': str(result.info)})
+    return jsonify({'status': result.state})
+
+
+@app.route('/searches/<int:search_id>/export/xlsx/download/<task_id>')
+@require_auth
+def export_xlsx_download(search_id, task_id):
+    _owned_search_or_404(search_id)
+    result = generate_xlsx_task.AsyncResult(task_id)
+    if result.state != 'SUCCESS':
+        return redirect(url_for('export_xlsx_wait', search_id=search_id, task_id=task_id))
+    data = result.get()
+    buf = io.BytesIO(base64.b64decode(data['xlsx_b64']))
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=data['filename']
+    )
+
+
+# === CSV Export ===
+
+@app.route('/searches/<int:search_id>/export/csv', methods=['POST'])
+@require_auth
+def export_csv(search_id):
+    s = _owned_search_or_404(search_id)
+    task = generate_csv_task.delay(s.id)
+    return redirect(url_for('export_csv_wait', search_id=s.id, task_id=task.id))
+
+
+@app.route('/searches/<int:search_id>/export/csv/wait/<task_id>')
+@require_auth
+def export_csv_wait(search_id, task_id):
+    _owned_search_or_404(search_id)
+    return render_template('export_wait.html', task_id=task_id, search_id=search_id, export_type='csv')
+
+
+@app.route('/searches/<int:search_id>/export/csv/status/<task_id>')
+@require_auth
+def export_csv_status(search_id, task_id):
+    _owned_search_or_404(search_id)
+    result = generate_csv_task.AsyncResult(task_id)
+    if result.state == 'SUCCESS':
+        return jsonify({'status': 'SUCCESS'})
+    if result.state == 'FAILURE':
+        return jsonify({'status': 'FAILURE', 'error': str(result.info)})
+    return jsonify({'status': result.state})
+
+
+@app.route('/searches/<int:search_id>/export/csv/download/<task_id>')
+@require_auth
+def export_csv_download(search_id, task_id):
+    _owned_search_or_404(search_id)
+    result = generate_csv_task.AsyncResult(task_id)
+    if result.state != 'SUCCESS':
+        return redirect(url_for('export_csv_wait', search_id=search_id, task_id=task_id))
+    data = result.get()
+    buf = io.BytesIO(base64.b64decode(data['csv_b64']))
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype='text/csv',
         as_attachment=True,
         download_name=data['filename']
     )

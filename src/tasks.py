@@ -146,11 +146,54 @@ def generate_ods_task(search_id):
 
     with app.app_context():
         bundle = flatten_search(search_id)
-        pregao = bundle['meta']['pregao_filter'] or 'todos'
+        cnpj = bundle['meta']['cnpj']
+        empresa = bundle.get('empresa') or {}
+        nome = empresa.get('razaoSocial', '') or ''
+        nome_slug = nome[:10].replace(' ', '_') if nome else 'empresa'
         blob = render_ods(bundle)
 
-    filename = f"empenhos_{pregao}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ods"
+    filename = f"{cnpj}-{nome_slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ods"
     return {
         'ods_b64': base64.b64encode(blob).decode(),
+        'filename': filename,
+    }
+
+
+@celery.task(name="generate_xlsx")
+def generate_xlsx_task(search_id):
+    from src.app import app
+    from src.exports import flatten_search, render_xlsx
+
+    with app.app_context():
+        bundle = flatten_search(search_id)
+        cnpj = bundle['meta']['cnpj']
+        empresa = bundle.get('empresa') or {}
+        nome = empresa.get('razaoSocial', '') or ''
+        nome_slug = nome[:10].replace(' ', '_') if nome else 'empresa'
+        blob = render_xlsx(bundle)
+
+    filename = f"{cnpj}-{nome_slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    return {
+        'xlsx_b64': base64.b64encode(blob).decode(),
+        'filename': filename,
+    }
+
+
+@celery.task(name="generate_csv")
+def generate_csv_task(search_id):
+    from src.app import app
+    from src.exports import flatten_search, render_csv
+
+    with app.app_context():
+        bundle = flatten_search(search_id)
+        cnpj = bundle['meta']['cnpj']
+        empresa = bundle.get('empresa') or {}
+        nome = empresa.get('razaoSocial', '') or ''
+        nome_slug = nome[:10].replace(' ', '_') if nome else 'empresa'
+        blob = render_csv(bundle)
+
+    filename = f"{cnpj}-{nome_slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return {
+        'csv_b64': base64.b64encode(blob).decode(),
         'filename': filename,
     }

@@ -1,4 +1,6 @@
 import io
+import zipfile
+import re
 
 from odf.opendocument import OpenDocumentSpreadsheet
 from odf.style import Style, TextProperties, TableCellProperties
@@ -6,6 +8,84 @@ from odf.text import P, A
 from odf.table import Table, TableColumn, TableRow, TableCell
 
 from src.exports.parse import fmt_br_money
+
+
+def _set_column_widths(ods_bytes):
+    """Post-process ODS XML to set column widths based on content."""
+    # ODS is a ZIP file; extract, modify content.xml, repack
+    buf_in = io.BytesIO(ods_bytes)
+    buf_out = io.BytesIO()
+    
+    with zipfile.ZipFile(buf_in, 'r') as zin:
+        with zipfile.ZipFile(buf_out, 'w', zipfile.ZIP_DEFLATED) as zout:
+            for item in zin.infolist():
+                data = zin.read(item.filename)
+                if item.filename == 'content.xml':
+                    data = _fix_column_widths(data)
+                zout.writestr(item, data)
+    
+    return buf_out.getvalue()
+
+
+def _fix_column_widths(xml_bytes):
+    """Parse XML, calculate column widths, add style:column-width attributes."""
+    content = xml_bytes.decode('utf-8')
+    
+    def process_table(match):
+        table_xml = match.group(0)
+        
+        # Count columns
+        col_pattern = re.compile(r'<table:table-column[^>]*/>')
+        cols = list(col_pattern.finditer(table_xml))
+        num_cols = len(cols)
+        
+        if num_cols == 0:
+            return table_xml
+        
+        # Track max text length per column
+        col_widths = [0] * num_cols
+        
+        cell_pattern = re.compile(r'<table:table-cell[^>]*>(.*?)</table:table-cell>', re.DOTALL)
+        row_pattern = re.compile(r'<table:table-row[^>]*>(.*?)</table:table-row>', re.DOTALL)
+        
+        # First: header row
+        rows = list(row_pattern.finditer(table_xml))
+        if rows:
+            cells = list(cell_pattern.finditer(rows[0].group(1)))
+            for i, cell_match in enumerate(cells):
+                if i < num_cols:
+                    clean = re.sub(r'<[^>]+>', '', cell_match.group(1)).strip()
+                    col_widths[i] = max(col_widths[i], len(clean))
+        
+        # Second: all other rows
+        for row in rows[1:]:
+            cells = list(cell_pattern.finditer(row.group(1)))
+            for i, cell_match in enumerate(cells):
+                if i < num_cols:
+                    clean = re.sub(r'<[^>]+>', '', cell_match.group(1)).strip()
+                    if len(clean) > col_widths[i]:
+                        col_widths[i] = len(clean)
+        
+        # Character to cm: min 1.5cm, max 12cm
+        widths_cm = [max(1.5, min(12.0, w * 0.35 + 1.0)) for w in col_widths]
+        
+        # Replace each <table:table-column...> with style:column-width
+        # We'll use a counter instead of regex groups
+        col_idx = [0]  # closure-safe counter
+        
+        def replace_col(m):
+            idx = col_idx[0]
+            col_idx[0] += 1
+            if idx < len(widths_cm):
+                return f'<table:table-column style:column-width="{widths_cm[idx]:.1f}cm"/>'
+            return m.group(0)
+        
+        new_table = col_pattern.sub(replace_col, table_xml)
+        return new_table
+    
+    content = re.sub(r'<table:table[^>]*>.*?</table:table>', process_table, content, flags=re.DOTALL)
+    
+    return content.encode('utf-8')
 
 
 def _style_header(doc):
@@ -305,7 +385,7 @@ def _sheet_empresa(doc, empresa, header_style, label_style):
 
 
 def render_ods(bundle):
-    """Render ExportBundle dict to .ods bytes."""
+    """Render ExportBundle dict to .ods bytes with auto-width columns."""
     doc = OpenDocumentSpreadsheet()
     header_style = _style_header(doc)
     title_style = _style_title(doc)
@@ -320,4 +400,7 @@ def render_ods(bundle):
 
     buf = io.BytesIO()
     doc.save(buf)
-    return buf.getvalue()
+    ods_bytes = buf.getvalue()
+    
+    # Post-process XML to set column widths based on content
+    return _set_column_widths(ods_bytes)

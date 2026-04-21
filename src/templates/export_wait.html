@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gerando planilha ODS...</title>
+    <title>Gerando export...</title>
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body class="bg-gray-100 min-h-screen flex items-center justify-center p-8">
@@ -15,7 +15,8 @@
           class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mx-auto mb-6"
         ></div>
         <h2 class="text-xl font-bold text-gray-800 mb-2">
-          Gerando planilha ODS
+          Gerando {% if export_type == 'csv' %}CSV{% elif export_type == 'xlsx'
+          %}.XLSX{% else %}.ODS{% endif %}
         </h2>
         <p class="text-gray-500 mb-2">
           Buscando dados dos empenhos no Portal da Transparência...
@@ -24,7 +25,10 @@
           Aguardando worker...
         </p>
         <div class="mt-6">
-          <button onclick="history.back()" class="text-sm text-gray-500 hover:text-gray-700 underline">
+          <button
+            onclick="history.back()"
+            class="text-sm text-gray-500 hover:text-gray-700 underline"
+          >
             ← Voltar aos resultados
           </button>
         </div>
@@ -46,19 +50,23 @@
             />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Planilha pronta!</h2>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Arquivo pronto!</h2>
         <a
           id="download-link"
           href="#"
           class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
         >
-          Baixar .ODS
+          Baixar {% if export_type == 'csv' %}.CSV{% elif export_type == 'xlsx'
+          %}.XLSX{% else %}.ODS{% endif %}
         </a>
         <div class="mt-4 flex justify-center">
           <a href="/" class="text-sm text-gray-500 hover:underline"
             >Nova busca</a
           >
-          <button onclick="history.back()" class="text-sm text-gray-500 hover:underline ml-4">
+          <button
+            onclick="history.back()"
+            class="text-sm text-gray-500 hover:underline ml-4"
+          >
             ← Voltar aos resultados
           </button>
         </div>
@@ -81,7 +89,7 @@
           </svg>
         </div>
         <h2 class="text-xl font-bold text-gray-800 mb-2">
-          Erro ao gerar planilha
+          Erro ao gerar arquivo
         </h2>
         <p class="text-sm text-gray-500 mb-4" id="error-msg"></p>
         <a href="/" class="text-blue-600 hover:underline text-sm"
@@ -92,19 +100,21 @@
 
     <script>
       const taskId = "{{ task_id }}";
+      const exportType = "{{ export_type | default('ods') }}";
+      const statusUrl = `/searches/{{ search_id }}/export/${exportType}/status/${taskId}`;
+      const downloadUrl = `/searches/{{ search_id }}/export/${exportType}/download/${taskId}`;
       let attempts = 0;
       const maxAttempts = 150;
 
       function poll() {
-        fetch(`/searches/{{ search_id }}/export/ods/status/${taskId}`)
+        fetch(statusUrl)
           .then((r) => r.json())
           .then((data) => {
             if (data.status === "SUCCESS") {
-              const dlUrl = `/searches/{{ search_id }}/export/ods/download/${taskId}`;
               document.getElementById("loading").classList.add("hidden");
               document.getElementById("ready").classList.remove("hidden");
-              document.getElementById("download-link").href = dlUrl;
-              window.location.href = dlUrl;
+              document.getElementById("download-link").href = downloadUrl;
+              window.location.href = downloadUrl;
             } else if (data.status === "FAILURE") {
               document.getElementById("loading").classList.add("hidden");
               document.getElementById("error").classList.remove("hidden");
