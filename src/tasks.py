@@ -1,13 +1,7 @@
 from celery import Celery
 import os
-import io
 import base64
-from datetime import datetime
-
-from odf.opendocument import OpenDocumentSpreadsheet
-from odf.style import Style, TextProperties, TableCellProperties
-from odf.text import P
-from odf.table import Table, TableColumn, TableRow, TableCell
+from datetime import datetime, timezone
 
 celery = Celery(
     "tasks",
@@ -29,6 +23,31 @@ def health_check():
     return {"status": "ok"}
 
 
+@celery.task(name="fetch_enrichment", max_retries=3, default_retry_delay=30)
+def fetch_enrichment(result_id):
+    from src.app import app
+    from src.portal_api import get_itens_empenho, get_item_historico, get_documentos_relacionados, get_empresa
+    from src.auth.models import SearchResult
+    from src.db import db
+
+    with app.app_context():
+        r = SearchResult.query.get(result_id)
+        if not r:
+            return {"status": "missing"}
+        cnpj = r.search.cnpj
+        itens = get_itens_empenho(r.documento)
+        for item in itens:
+            item['historico'] = get_item_historico(r.documento, item['sequencial'])
+        r.enrichment_json = {
+            "itens_empenho": itens,
+            "documentos_relacionados": get_documentos_relacionados(r.documento),
+            "empresa": get_empresa(cnpj),
+        }
+        r.enriched_at = datetime.now(timezone.utc)
+        db.session.commit()
+        return {"status": "done", "result_id": result_id}
+
+
 def _parse_br_date(s):
     try:
         return datetime.strptime(s, '%d/%m/%Y').date()
@@ -48,7 +67,7 @@ def _parse_br_money(s):
 @celery.task(name="fetch_search_results")
 def fetch_search_results(search_id):
     from src.app import app
-    from src.portal_api import get_empenhos_list, get_empenho_details
+    from src.portal_api import get_empenhos_list, get_empenho_details, get_empresa
     from src.auth.models import Search, SearchResult
     from src.db import db
 
@@ -105,7 +124,10 @@ def fetch_search_results(search_id):
                 )
                 db.session.add(sr)
                 db.session.commit()
+                fetch_enrichment.delay(sr.id)
 
+            empresa = get_empresa(search.cnpj)
+            search.name = empresa.get('razaoSocial') or search.cnpj
             search.status = 'done'
             db.session.commit()
             return {"status": "done", "count": len(raws)}
@@ -120,112 +142,15 @@ def fetch_search_results(search_id):
 @celery.task(name="generate_ods")
 def generate_ods_task(search_id):
     from src.app import app
-    from src.auth.models import Search, SearchResult
+    from src.exports import flatten_search, render_ods
 
     with app.app_context():
-        search = Search.query.get(search_id)
-        if not search:
-            raise ValueError(f"Search {search_id} not found")
-        rows = (SearchResult.query
-                .filter_by(search_id=search_id, included=True)
-                .order_by(SearchResult.data.desc().nullslast())
-                .all())
-        pregao_filter = search.pregao_filter or ''
+        bundle = flatten_search(search_id)
+        pregao = bundle['meta']['pregao_filter'] or 'todos'
+        blob = render_ods(bundle)
 
-        detailed_empenhos = []
-        for r in rows:
-            base = dict(r.detail_json or {})
-            base.setdefault('documento', r.documento)
-            base.setdefault('documentoResumido', r.documento_resumido or r.documento)
-            base.setdefault('data', r.data.strftime('%d/%m/%Y') if r.data else '')
-            if 'valor' not in base:
-                v = float(r.valor) if r.valor is not None else 0.0
-                base['valor'] = f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            base.setdefault('ug', r.ug or '')
-            base.setdefault('codigoUg', r.codigo_ug or '')
-            base.setdefault('orgao', r.orgao or '')
-            base.setdefault('codigoOrgao', r.codigo_orgao or '')
-            base.setdefault('numeroProcesso', r.numero_processo or '')
-            base.setdefault('observacao', r.observacao or '')
-            base.setdefault('categoria', r.categoria or '')
-            base.setdefault('grupo', r.grupo or '')
-            base.setdefault('elemento', r.elemento or '')
-            detailed_empenhos.append(base)
-
-    doc = OpenDocumentSpreadsheet()
-
-    header_style = Style(name="HeaderCell", family="table-cell")
-    header_style.addElement(TextProperties(fontweight="bold"))
-    header_style.addElement(TableCellProperties(backgroundcolor="#2c3e50"))
-    doc.automaticstyles.addElement(header_style)
-
-    table = Table(name="Empenhos")
-    columns = ["Data", "Documento", "Unidade Gestora", "Órgão", "Valor (R$)",
-               "Número do Processo", "Descrição", "Categoria", "Grupo", "Elemento"]
-    for _ in columns:
-        table.addElement(TableColumn())
-
-    header_row = TableRow()
-    for col_name in columns:
-        cell = TableCell(valuetype="string", stylename="HeaderCell")
-        cell.addElement(P(text=col_name))
-        header_row.addElement(cell)
-    table.addElement(header_row)
-
-    total = 0.0
-    for emp in detailed_empenhos:
-        row = TableRow()
-
-        def add_cell(val, _row=row):
-            c = TableCell(valuetype="string")
-            c.addElement(P(text=str(val) if val is not None else ""))
-            _row.addElement(c)
-
-        add_cell(emp.get('data', ''))
-        add_cell(emp.get('documentoResumido') or emp.get('documento', ''))
-        add_cell(f"{emp.get('codigoUg', '')} - {emp.get('ug', '')}")
-        add_cell(f"{emp.get('codigoOrgao', '')} - {emp.get('orgao', '')}")
-
-        val_raw = emp.get('valor', '0')
-        try:
-            val_float = float(str(val_raw).replace('.', '').replace(',', '.'))
-            total += val_float
-            val_str = f"{val_float:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        except Exception:
-            val_str = str(val_raw)
-        add_cell(val_str)
-
-        add_cell(emp.get('numeroProcesso', ''))
-        add_cell(emp.get('observacao', ''))
-        add_cell(emp.get('categoria', ''))
-        add_cell(emp.get('grupo', ''))
-        add_cell(emp.get('elemento', ''))
-
-        table.addElement(row)
-
-    blank_row = TableRow()
-    for _ in columns:
-        blank_row.addElement(TableCell())
-    table.addElement(blank_row)
-
-    total_row = TableRow()
-    total_label = TableCell(valuetype="string")
-    total_label.addElement(P(text="TOTAL"))
-    total_row.addElement(total_label)
-    for _ in range(3):
-        total_row.addElement(TableCell())
-    total_val_cell = TableCell(valuetype="string")
-    total_fmt = f"{total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-    total_val_cell.addElement(P(text=total_fmt))
-    total_row.addElement(total_val_cell)
-    table.addElement(total_row)
-
-    doc.spreadsheet.addElement(table)
-
-    buf = io.BytesIO()
-    doc.save(buf)
-    filename = f"empenhos_{pregao_filter or 'todos'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ods"
+    filename = f"empenhos_{pregao}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ods"
     return {
-        'ods_b64': base64.b64encode(buf.getvalue()).decode(),
+        'ods_b64': base64.b64encode(blob).decode(),
         'filename': filename,
     }
