@@ -80,6 +80,8 @@ def try_consume_token(r, key):
 
 
 def wait_for_quota(key=None):
+    if os.getenv("DISABLE_RATE_LIMIT", "").lower() in ("1", "true", "yes"):
+        return
     if key is None:
         key = RATE_LIMIT_BUCKET_KEY
     r = get_redis()

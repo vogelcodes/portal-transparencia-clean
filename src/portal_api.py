@@ -106,3 +106,37 @@ def get_empenho_details(doc_id):
         return request_portal(url).json()
     except Exception:
         return {}
+
+
+def get_itens_empenho(doc_id):
+    url = "https://api.portaldatransparencia.gov.br/api-de-dados/despesas/itens-de-empenho"
+    try:
+        data = request_portal(url, params={"codigoDocumento": doc_id, "pagina": 1}).json()
+        return sorted(data, key=lambda x: int(x.get('sequencial', 0)))
+    except Exception:
+        return []
+
+
+def get_item_historico(doc_id, sequencial):
+    url = "https://api.portaldatransparencia.gov.br/api-de-dados/despesas/itens-de-empenho/historico"
+    try:
+        return request_portal(url, params={"codigoDocumento": doc_id, "sequencial": sequencial, "pagina": 1}).json()
+    except Exception:
+        return []
+
+
+def get_documentos_relacionados(doc_id):
+    url = "https://api.portaldatransparencia.gov.br/api-de-dados/despesas/documentos-relacionados"
+    try:
+        return request_portal(url, params={"codigoDocumento": doc_id, "fase": 1}).json()
+    except Exception:
+        return []
+
+
+def get_empresa(cnpj):
+    url = "https://api.portaldatransparencia.gov.br/api-de-dados/pessoa-juridica"
+    clean = cnpj.replace('.', '').replace('/', '').replace('-', '')
+    try:
+        return request_portal(url, params={"cnpj": clean}).json()
+    except Exception:
+        return {}

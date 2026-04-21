@@ -7,7 +7,7 @@ import io
 import base64
 import os
 
-from src.tasks import generate_ods_task, fetch_search_results
+from src.tasks import generate_ods_task, fetch_search_results, fetch_enrichment
 from src.db import db
 from src.auth import auth_bp
 from src.auth.models import User, Search, SearchResult
@@ -87,12 +87,11 @@ def searches_list():
 def searches_create():
     cnpj = (request.form.get('cnpj') or '').strip()
     pregao = (request.form.get('pregao') or '').strip()
-    name = (request.form.get('name') or '').strip() or None
     if not cnpj:
         return "CNPJ obrigatório", 400
     s = Search(
         user_id=current_user.id,
-        name=name,
+        name=None,
         cnpj=cnpj,
         pregao_filter=pregao or None,
         status='pending',
@@ -142,6 +141,32 @@ def searches_refresh(search_id):
     db.session.commit()
     fetch_search_results.delay(s.id)
     return redirect(url_for('searches_detail', search_id=s.id))
+
+
+@app.route('/searches/<int:search_id>/enrichment-status', methods=['GET'])
+@require_auth
+def enrichment_status(search_id):
+    s = _owned_search_or_404(search_id)
+    total = s.results.count()
+    enriched = s.results.filter(SearchResult.enrichment_json.isnot(None)).count()
+    return jsonify({'total': total, 'enriched': enriched, 'pending': total - enriched})
+
+
+@app.route('/searches/<int:search_id>/enrichments', methods=['GET'])
+@require_auth
+def list_enrichments(search_id):
+    s = _owned_search_or_404(search_id)
+    rows = s.results.filter(SearchResult.enrichment_json.isnot(None)).all()
+    return jsonify([{'id': r.id, 'enrichment_json': r.enrichment_json} for r in rows])
+
+
+@app.route('/searches/<int:search_id>/results/<int:rid>/enrich', methods=['POST'])
+@require_auth
+def enrich_result(search_id, rid):
+    s = _owned_search_or_404(search_id)
+    r = SearchResult.query.filter_by(id=rid, search_id=s.id).first_or_404()
+    fetch_enrichment.delay(r.id)
+    return jsonify({'status': 'queued'})
 
 
 @app.route('/searches/<int:search_id>/results/<int:rid>', methods=['PATCH'])
