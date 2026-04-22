@@ -1,246 +1,219 @@
-<!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Relatório de Notas de Empenho</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              surface: "#FFFFFF",
-              "surface-dim": "#FAFAFA",
-              "surface-container": "#F8F8F8",
-              "surface-container-high": "#F0F0F0",
-              "surface-container-highest": "#E8E8E8",
-              "on-surface": "#1a1a1a",
-              "on-surface-variant": "#333333",
-              primary: "#1351B4",
-              "on-primary": "#FFFFFF",
-              "primary-container": "#E8F0FE",
-              "on-primary-container": "#0D47A1",
-              secondary: "#455A64",
-              error: "#B00020",
-              background: "#FFFFFF",
-            },
-            fontFamily: {
-              rawline: ["Raleway", "sans-serif"],
-            },
-            borderRadius: {
-              sm: "2px",
-              DEFAULT: "3px",
-              md: "4px",
-              lg: "6px",
-              xl: "12px",
-            },
-            boxShadow: {
-              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
-              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
-            },
-          },
+{% extends "base.html" %} {% block title %}<title>
+  Relatório de Notas de Empenho - Portal Transparência</title
+>{% endblock %} {% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          surface: "var(--color-surface)",
+          "surface-dim": "var(--color-surface-dim)",
+          "surface-container": "var(--color-surface-container)",
+          "surface-container-high": "var(--color-surface-container-high)",
+          "surface-container-highest": "var(--color-surface-container-highest)",
+          "on-surface": "var(--color-on-surface)",
+          "on-surface-variant": "var(--color-on-surface-variant)",
+          primary: "var(--color-primary)",
+          "on-primary": "var(--color-on-primary)",
+          "primary-container": "var(--color-primary-container)",
+          "on-primary-container": "var(--color-on-primary-container)",
+          secondary: "var(--color-secondary)",
+          "on-secondary": "var(--color-on-secondary)",
+          "secondary-container": "var(--color-secondary-container)",
+          "on-secondary-container": "var(--color-on-secondary-container)",
+          error: "var(--color-error)",
+          background: "var(--color-background)",
         },
-      };
-    </script>
-    <style>
-      @media print {
-        .print-btn {
-          display: none;
-        }
-        body {
-          padding: 0;
-          max-width: none;
-        }
-        .empenho-container {
-          page-break-inside: avoid;
-          border: 1px solid #ccc;
-        }
-      }
-    </style>
-  </head>
+        fontFamily: {
+          rawline: ["Rawline", "Raleway", "sans-serif"],
+        },
+        borderRadius: {
+          sm: "2px",
+          DEFAULT: "3px",
+          md: "4px",
+          lg: "6px",
+          xl: "12px",
+        },
+        boxShadow: {
+          card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+          elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+        },
+      },
+    },
+  };
+</script>
+<style>
+  @media print {
+    .print-btn {
+      display: none;
+    }
+    body {
+      padding: 0;
+      max-width: none;
+    }
+    .empenho-container {
+      page-break-inside: avoid;
+      border: 1px solid #ccc;
+    }
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="p-6">
+  <div class="max-w-5xl mx-auto">
+    <!-- Print Button -->
+    <button onclick="window.print()" class="btn btn-primary print-btn mb-6">
+      Imprimir / Salvar como PDF
+    </button>
 
-  <body class="bg-background text-on-surface font-rawline p-6">
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-
-    <div class="max-w-5xl mx-auto">
-      <!-- Print Button -->
-      <a
-        href="#"
-        onclick="
-          window.print();
-          return false;
-        "
-        class="print-btn inline-block mb-6 px-6 py-3 bg-primary text-on-primary rounded-md shadow-card hover:bg-on-primary-container transition-colors text-label-sm font-semibold uppercase tracking-wide"
+    <!-- Header -->
+    <div class="bg-surface-dim rounded-lg shadow-card p-6 mb-6">
+      <h1
+        class="text-headline-lg text-on-surface font-semibold border-b border-surface-container pb-4"
       >
-        Imprimir / Salvar como PDF
-      </a>
+        Relatório de Notas de Empenho
+      </h1>
+      <p class="text-body-md text-on-surface-variant mt-4">
+        Este relatório lista as Notas de Empenho selecionadas.
+      </p>
+    </div>
 
-      <!-- Header -->
-      <div class="bg-surface-dim rounded-lg shadow-card p-6 mb-6">
-        <h1
-          class="text-headline-lg text-on-surface font-semibold border-b border-surface-container pb-4"
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="card-dim p-6">
+        <h4
+          class="font-label-sm text-on-surface-variant uppercase tracking-wide mb-2"
         >
-          Relatório de Notas de Empenho
-        </h1>
-        <p class="text-body-md text-on-surface-variant mt-4">
-          Este relatório lista as Notas de Empenho selecionadas.
-        </p>
-      </div>
-
-      <!-- Summary Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div class="bg-surface rounded-lg shadow-card p-6">
-          <h4
-            class="text-label-sm text-on-surface-variant font-semibold uppercase tracking-wide"
-          >
-            Total Empenhado
-          </h4>
-          <div class="text-headline-md text-on-surface font-bold mt-2">
-            {{ total_value }}
-          </div>
-        </div>
-        <div class="bg-surface rounded-lg shadow-card p-6">
-          <h4
-            class="text-label-sm text-on-surface-variant font-semibold uppercase tracking-wide"
-          >
-            Total de Documentos
-          </h4>
-          <div class="text-headline-md text-on-surface font-bold mt-2">
-            {{ count }}
-          </div>
-        </div>
-        <div class="bg-surface rounded-lg shadow-card p-6">
-          <h4
-            class="text-label-sm text-on-surface-variant font-semibold uppercase tracking-wide"
-          >
-            Filtro Aplicado
-          </h4>
-          <div class="text-headline-md text-on-surface font-bold mt-2">
-            {{ pregao_filter if pregao_filter else 'Nenhum' }}
-          </div>
+          Total Empenhado
+        </h4>
+        <div class="text-headline-md text-on-surface font-bold mt-2">
+          {{ total_value }}
         </div>
       </div>
-
-      <!-- Section Title -->
-      <h2 class="text-headline-md text-on-surface font-semibold mb-4">
-        Detalhamento dos Empenhos
-      </h2>
-
-      <!-- Empenho List -->
-      {% for emp in empenhos %}
-      <div
-        class="empenho-container bg-surface rounded-lg shadow-card overflow-hidden mb-6"
-      >
-        <!-- Header -->
-        <div
-          class="bg-surface-container-high px-5 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
+      <div class="card-dim p-6">
+        <h4
+          class="font-label-sm text-on-surface-variant uppercase tracking-wide mb-2"
         >
-          <div class="flex items-center gap-3 flex-wrap">
-            <a
-              href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ emp.documento }}"
-              target="_blank"
-              class="text-primary hover:text-on-primary-container font-medium text-body-md"
-            >
-              {{ emp.documentoResumido or emp.documento }} 🔗
-            </a>
-            {% if "90021" in (emp.observacao or '') or "90021" in str(emp) %}
-            <span
-              class="bg-primary-container text-on-primary-container text-label-sm px-2 py-1 rounded-sm font-medium"
-            >
-              Pregão 90021/2024
-            </span>
-            {% endif %} {% if pregao_filter and pregao_filter != "90021" and
-            (pregao_filter in (emp.observacao or '') or pregao_filter in
-            str(emp)) %}
-            <span
-              class="bg-primary-container text-on-primary-container text-label-sm px-2 py-1 rounded-sm font-medium"
-            >
-              Filtro: {{ pregao_filter }}
-            </span>
-            {% endif %}
-          </div>
-          <span class="text-label-sm text-on-surface-variant"
-            >{{ format_date(emp.data) }}</span
-          >
-        </div>
-
-        <!-- Body -->
-        <div class="p-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-            <div class="flex">
-              <span
-                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
-                >Unidade Gestora:</span
-              >
-              <span class="text-body-md text-on-surface-variant"
-                >{{ emp.codigoUg }} - {{ emp.ug }}</span
-              >
-            </div>
-            <div class="flex">
-              <span
-                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
-                >Valor:</span
-              >
-              <span class="text-body-md text-on-surface font-bold"
-                >{{ format_currency(emp.valor) }}</span
-              >
-            </div>
-            <div class="flex">
-              <span
-                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
-                >Processo:</span
-              >
-              <span class="text-body-md text-on-surface-variant"
-                >{{ emp.numeroProcesso }}</span
-              >
-            </div>
-            <div class="flex">
-              <span
-                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
-                >Descrição:</span
-              >
-              <span class="text-body-md text-on-surface-variant"
-                >{{ emp.observacao }}</span
-              >
-            </div>
-            <div class="md:col-span-2 flex">
-              <span
-                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
-                >Natureza:</span
-              >
-              <span class="text-body-md text-on-surface-variant"
-                >{{ emp.categoria }} > {{ emp.grupo }} > {{ emp.elemento
-                }}</span
-              >
-            </div>
-          </div>
-
-          {% if not emp.items %}
-          <div
-            class="mt-4 bg-primary-container/30 border-l-4 border-primary-container px-4 py-3 rounded-sm"
-          >
-            <p class="text-body-md text-on-surface-variant">
-              Detalhes dos itens não disponíveis via API pública.
-            </p>
-          </div>
-          {% endif %}
+          Total de Documentos
+        </h4>
+        <div class="text-headline-md text-on-surface font-bold mt-2">
+          {{ count }}
         </div>
       </div>
-      {% endfor %}
-
-      <!-- Footer -->
-      <div class="mt-8 pt-4 border-t border-surface-container text-center">
-        <p class="text-label-sm text-on-surface-variant">
-          Gerado automaticamente via Portal Transparência Utils em {{ now }}.
-        </p>
+      <div class="card-dim p-6">
+        <h4
+          class="font-label-sm text-on-surface-variant uppercase tracking-wide mb-2"
+        >
+          Filtro Aplicado
+        </h4>
+        <div class="text-headline-md text-on-surface font-bold mt-2">
+          {{ pregao_filter if pregao_filter else 'Nenhum' }}
+        </div>
       </div>
     </div>
-  </body>
-</html>
+
+    <!-- Section Title -->
+    <h2 class="text-headline-md text-on-surface font-semibold mb-4">
+      Detalhamento dos Empenhos
+    </h2>
+
+    <!-- Empenho List -->
+    {% for emp in empenhos %}
+    <div class="empenho-container card mb-6">
+      <!-- Header -->
+      <div
+        class="bg-surface-container-high px-5 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
+      >
+        <div class="flex items-center gap-3 flex-wrap">
+          <a
+            href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ emp.documento }}"
+            target="_blank"
+            class="text-primary hover:text-on-primary-container font-medium text-body-md"
+          >
+            {{ emp.documentoResumido or emp.documento }} 🔗
+          </a>
+          {% if "90021" in (emp.observacao or '') or "90021" in str(emp) %}
+          <span class="badge badge-emitido">Pregão 90021/2024</span>
+          {% endif %} {% if pregao_filter and pregao_filter != "90021" and
+          (pregao_filter in (emp.observacao or '') or pregao_filter in str(emp))
+          %}
+          <span class="badge badge-emitido">Filtro: {{ pregao_filter }}</span>
+          {% endif %}
+        </div>
+        <span class="font-label-sm text-on-surface-variant"
+          >{{ format_date(emp.data) }}</span
+        >
+      </div>
+
+      <!-- Body -->
+      <div class="p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+          <div class="info-row">
+            <span
+              class="font-label-sm text-on-surface uppercase w-36 flex-shrink-0"
+              >Unidade Gestora:</span
+            >
+            <span class="text-body-md text-on-surface-variant"
+              >{{ emp.codigoUg }} - {{ emp.ug }}</span
+            >
+          </div>
+          <div class="info-row">
+            <span
+              class="font-label-sm text-on-surface uppercase w-36 flex-shrink-0"
+              >Valor:</span
+            >
+            <span class="text-body-md text-on-surface font-bold"
+              >{{ format_currency(emp.valor) }}</span
+            >
+          </div>
+          <div class="info-row">
+            <span
+              class="font-label-sm text-on-surface uppercase w-36 flex-shrink-0"
+              >Processo:</span
+            >
+            <span class="text-body-md text-on-surface-variant"
+              >{{ emp.numeroProcesso }}</span
+            >
+          </div>
+          <div class="info-row">
+            <span
+              class="font-label-sm text-on-surface uppercase w-36 flex-shrink-0"
+              >Descrição:</span
+            >
+            <span class="text-body-md text-on-surface-variant"
+              >{{ emp.observacao }}</span
+            >
+          </div>
+          <div class="md:col-span-2 info-row">
+            <span
+              class="font-label-sm text-on-surface uppercase w-36 flex-shrink-0"
+              >Natureza:</span
+            >
+            <span class="text-body-md text-on-surface-variant"
+              >{{ emp.categoria }} > {{ emp.grupo }} > {{ emp.elemento }}</span
+            >
+          </div>
+        </div>
+
+        {% if not emp.items %}
+        <div
+          class="mt-4 bg-primary-container/30 border-l-4 border-primary-container px-4 py-3 rounded-sm"
+        >
+          <p class="text-body-md text-on-surface-variant">
+            Detalhes dos itens não disponíveis via API pública.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Footer -->
+    <div class="mt-8 pt-4 border-t border-surface-container text-center">
+      <p class="font-label-sm text-on-surface-variant">
+        Gerado automaticamente via Portal Transparência Utils em {{ now }}.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

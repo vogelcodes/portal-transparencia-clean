@@ -1,269 +1,235 @@
-<!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Busca #{{ search.id }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              surface: "#FFFFFF",
-              "surface-dim": "#FAFAFA",
-              "surface-container": "#F8F8F8",
-              "surface-container-high": "#F0F0F0",
-              "surface-container-highest": "#E8E8E8",
-              "on-surface": "#1a1a1a",
-              "on-surface-variant": "#333333",
-              primary: "#1351B4",
-              "on-primary": "#FFFFFF",
-              "primary-container": "#E8F0FE",
-              "on-primary-container": "#0D47A1",
-              secondary: "#455A64",
-              error: "#B00020",
-              background: "#FFFFFF",
-            },
-            fontFamily: {
-              rawline: ["Raleway", "sans-serif"],
-            },
-            borderRadius: {
-              sm: "2px",
-              DEFAULT: "3px",
-              md: "4px",
-              lg: "6px",
-              xl: "12px",
-            },
-            boxShadow: {
-              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
-              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
-            },
-          },
+{% extends "base.html" %} {% block title %}<title>
+  Busca #{{ search.id }} - Portal Transparência</title
+>{% endblock %} {% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          surface: "var(--color-surface)",
+          "surface-dim": "var(--color-surface-dim)",
+          "surface-container": "var(--color-surface-container)",
+          "surface-container-high": "var(--color-surface-container-high)",
+          "surface-container-highest": "var(--color-surface-container-highest)",
+          "on-surface": "var(--color-on-surface)",
+          "on-surface-variant": "var(--color-on-surface-variant)",
+          primary: "var(--color-primary)",
+          "on-primary": "var(--color-on-primary)",
+          "primary-container": "var(--color-primary-container)",
+          "on-primary-container": "var(--color-on-primary-container)",
+          secondary: "var(--color-secondary)",
+          "on-secondary": "var(--color-on-secondary)",
+          "secondary-container": "var(--color-secondary-container)",
+          "on-secondary-container": "var(--color-on-secondary-container)",
+          error: "var(--color-error)",
+          "on-error": "var(--color-on-error)",
+          "error-container": "var(--color-error-container)",
+          "on-error-container": "var(--color-on-error-container)",
+          background: "var(--color-background)",
         },
-      };
-    </script>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap");
-      .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-    </style>
-  </head>
-  <body class="bg-background min-h-screen p-6 font-rawline">
-    <div class="max-w-6xl mx-auto bg-surface rounded-lg shadow-elevated p-6">
-      <!-- Header -->
-      <div
-        class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4"
-      >
-        <div>
-          <h1 class="text-headline-md text-on-surface font-semibold">
-            {{ search.name or ('Busca #' ~ search.id) }}
-          </h1>
-          <p class="text-body-md text-on-surface-variant mt-1">
-            CNPJ: {{ search.cnpj }} | Filtro:
-            <strong class="text-primary"
-              >{{ search.pregao_filter or 'Todos' }}</strong
-            >
-          </p>
-        </div>
-        <div class="flex gap-3 items-center flex-wrap">
-          <span
-            id="status-badge"
-            class="px-3 py-1 rounded-sm text-label-sm bg-amber-100 text-amber-800"
+        fontFamily: {
+          rawline: ["Rawline", "Raleway", "sans-serif"],
+        },
+        borderRadius: {
+          sm: "2px",
+          DEFAULT: "3px",
+          md: "4px",
+          lg: "6px",
+          xl: "12px",
+        },
+        boxShadow: {
+          card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+          elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+        },
+      },
+    },
+  };
+</script>
+<style>
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="p-6">
+  <div class="max-w-6xl mx-auto bg-surface rounded-lg shadow-elevated p-6">
+    <!-- Header -->
+    <div
+      class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4"
+    >
+      <div>
+        <h1 class="text-headline-md text-on-surface font-semibold">
+          {{ search.name or ('Busca #' ~ search.id) }}
+        </h1>
+        <p class="text-body-md text-on-surface-variant mt-1">
+          CNPJ: {{ search.cnpj }} | Filtro:
+          <strong class="text-primary"
+            >{{ search.pregao_filter or 'Todos' }}</strong
           >
-            {{ search.status }}
-          </span>
-          <a
-            href="/searches"
-            class="text-label-sm text-primary hover:text-on-primary-container"
-          >
-            Minhas buscas
-          </a>
-          <a
-            href="/"
-            class="text-label-sm text-primary hover:text-on-primary-container"
-          >
-            Nova busca
-          </a>
-        </div>
+        </p>
       </div>
-
-      {% if search.error %}
-      <div
-        class="mb-4 p-3 bg-error-container border border-error rounded-md text-body-md text-on-error-container"
-      >
-        {{ search.error }}
-      </div>
-      {% endif %} {% set total_results = results | length %} {% set
-      enriched_count = results | selectattr('enrichment_json') | list | length
-      %}
-
-      <p class="mb-4 text-body-lg font-medium text-on-surface">
-        Total de empenhos encontrados:
-        <span class="text-headline-md font-bold text-primary"
-          >{{ total_results }}</span
+      <div class="flex gap-3 items-center flex-wrap">
+        <span id="status-badge" class="badge badge-pending"
+          >{{ search.status }}</span
         >
-      </p>
+        <a href="/searches" class="btn btn-ghost">Minhas buscas</a>
+        <a href="/" class="btn btn-ghost">Nova busca</a>
+      </div>
+    </div>
 
-      <!-- Enrichment Banner -->
-      <div
-        id="enrich-banner"
-        class="mb-4 p-4 bg-primary-container/20 border border-primary-container rounded-md flex items-center gap-3 {% if total_results == 0 or enriched_count >= total_results %}hidden{% endif %}"
+    {% if search.error %}
+    <div
+      class="mb-4 p-3 bg-error-container border border-error rounded-md text-body-md text-on-error-container"
+    >
+      {{ search.error }}
+    </div>
+    {% endif %} {% set total_results = results | length %} {% set enriched_count
+    = results | selectattr('enrichment_json') | list | length %}
+
+    <p class="mb-4 text-body-lg font-medium text-on-surface">
+      Total de empenhos encontrados:
+      <span class="text-headline-md font-bold text-primary"
+        >{{ total_results }}</span
       >
+    </p>
+
+    <!-- Enrichment Banner -->
+    <div
+      id="enrich-banner"
+      class="mb-4 p-4 bg-primary-container/20 border border-primary-container rounded-md flex items-center gap-3 {% if total_results == 0 or enriched_count >= total_results %}hidden{% endif %}"
+    >
+      <div class="spinner mx-auto"></div>
+      <div class="flex-1">
+        <span class="text-body-md text-on-primary-container"
+          >Enriquecendo dados:</span
+        >
+        <span
+          id="enrich-count"
+          class="text-body-md font-semibold text-on-primary-container ml-1"
+          >{{ enriched_count }}/{{ total_results }}</span
+        >
         <div
-          class="animate-spin rounded-full h-5 w-5 border-2 border-primary-container border-t-primary flex-shrink-0"
-        ></div>
-        <div class="flex-1">
-          <span class="text-body-md text-on-primary-container"
-            >Enriquecendo dados:</span
-          >
-          <span
-            id="enrich-count"
-            class="text-body-md font-semibold text-on-primary-container ml-1"
-          >
-            {{ enriched_count }}/{{ total_results }}
-          </span>
+          class="mt-2 h-2 bg-primary-container/30 rounded-full overflow-hidden w-full"
+        >
           <div
-            class="mt-2 h-2 bg-primary-container/30 rounded-full overflow-hidden w-full"
-          >
-            <div
-              id="enrich-bar"
-              class="h-full bg-primary-container rounded-full transition-all duration-500"
-              style="width: {% if total_results %}{{ (enriched_count / total_results * 100) | int }}{% else %}0{% endif %}%"
-            ></div>
-          </div>
+            id="enrich-bar"
+            class="h-full bg-primary-container rounded-full transition-all duration-500"
+            style="width: {% if total_results %}{{ (enriched_count / total_results * 100) | int }}{% else %}0{% endif %}%"
+          ></div>
         </div>
       </div>
+    </div>
 
-      <!-- Action Buttons -->
-      <div class="mb-4 flex gap-3 items-center flex-wrap">
-        <form method="POST" action="/searches/{{ search.id }}/refresh">
-          <button
-            class="px-4 py-2 rounded-md text-label-sm font-medium text-on-secondary bg-secondary hover:bg-secondary-container"
+    <!-- Action Buttons -->
+    <div class="mb-4 flex gap-3 items-center flex-wrap">
+      <form method="POST" action="/searches/{{ search.id }}/refresh">
+        <button type="submit" class="btn btn-secondary">
+          Re-buscar na API
+        </button>
+      </form>
+      <div class="relative group">
+        <button id="export-btn" class="btn btn-primary">
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Re-buscar na API
-          </button>
-        </form>
-        <div class="relative group">
-          <button
-            id="export-btn"
-            class="px-4 py-2 rounded-md text-label-sm font-medium text-on-primary bg-primary hover:bg-on-primary-container flex items-center gap-2"
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Exportar
+          <svg
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+        <div
+          id="export-menu"
+          class="hidden absolute right-0 mt-1 w-52 bg-surface rounded-md shadow-elevated border border-surface-container py-1 z-50"
+        >
+          <form method="POST" action="/searches/{{ search.id }}/export/csv">
+            <button
+              type="submit"
+              class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Exportar
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              📄 CSV
+            </button>
+          </form>
+          <form method="POST" action="/searches/{{ search.id }}/export/xlsx">
+            <button
+              type="submit"
+              class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-          <div
-            id="export-menu"
-            class="hidden absolute right-0 mt-1 w-52 bg-surface rounded-md shadow-elevated border border-surface-container py-1 z-50"
-          >
-            <form method="POST" action="/searches/{{ search.id }}/export/csv">
-              <button
-                type="submit"
-                class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
-              >
-                📄 CSV
-              </button>
-            </form>
-            <form method="POST" action="/searches/{{ search.id }}/export/xlsx">
-              <button
-                type="submit"
-                class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
-              >
-                📊 XLSX (Excel) — colunas auto
-              </button>
-            </form>
-            <form method="POST" action="/searches/{{ search.id }}/export/ods">
-              <button
-                type="submit"
-                class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
-              >
-                📑 ODS (LibreOffice)
-              </button>
-            </form>
-          </div>
+              📊 XLSX (Excel)
+            </button>
+          </form>
+          <form method="POST" action="/searches/{{ search.id }}/export/ods">
+            <button
+              type="submit"
+              class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
+            >
+              📑 ODS (LibreOffice)
+            </button>
+          </form>
         </div>
       </div>
+    </div>
 
-      <!-- Empty State -->
+    <!-- Empty State -->
+    <div
+      id="empty"
+      class="{% if results %}hidden{% endif %} text-on-surface-variant py-8 text-center"
+    >
+      {% if search.status in ('pending', 'fetching') %}
       <div
-        id="empty"
-        class="{% if results %}hidden{% endif %} text-on-surface-variant py-8 text-center"
-      >
-        {% if search.status in ('pending', 'fetching') %}
-        <div
-          class="animate-spin rounded-full h-12 w-12 border-4 border-surface-container border-t-primary mx-auto mb-4"
-        ></div>
-        <p class="text-body-lg">Buscando empenhos…</p>
-        {% else %}
-        <p class="text-body-lg">Nenhum resultado.</p>
-        {% endif %}
-      </div>
+        class="spinner mx-auto mb-4"
+        style="width: 48px; height: 48px; border-width: 4px"
+      ></div>
+      <p class="text-body-lg">Buscando empenhos…</p>
+      {% else %}
+      <p class="text-body-lg">Nenhum resultado.</p>
+      {% endif %}
+    </div>
 
-      <!-- Results Table -->
-      <div
-        class="overflow-x-auto {% if not results %}hidden{% endif %}"
-        id="results-wrap"
-      >
-        <table class="min-w-full divide-y divide-surface-container">
-          <thead class="bg-surface-dim">
+    <!-- Results Table -->
+    <div
+      class="overflow-x-auto {% if not results %}hidden{% endif %}"
+      id="results-wrap"
+    >
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
             <tr>
-              <th class="px-4 py-3 w-10">
+              <th class="w-10 px-4 py-3">
                 <input
                   type="checkbox"
                   id="toggle-all"
                   class="rounded text-primary focus:ring-primary cursor-pointer"
                 />
               </th>
-              <th
-                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
-              >
-                Data
-              </th>
-              <th
-                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
-              >
-                Documento
-              </th>
-              <th
-                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide min-w-48"
-              >
-                Órgão
-              </th>
-              <th
-                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
-              >
-                Valor
-              </th>
-              <th class="px-4 py-3 w-10"></th>
+              <th class="text-left px-4 py-3">Data</th>
+              <th class="text-left px-4 py-3">Documento</th>
+              <th class="text-left px-4 py-3 min-w-48">Órgão</th>
+              <th class="text-left px-4 py-3">Valor</th>
+              <th class="w-10 px-4 py-3"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-surface-container" id="results-body">
@@ -315,9 +281,13 @@
                 >
                   +
                 </button>
+                <!-- Store enrichment data for client-side rendering -->
+                <script type="application/json" id="enrich-data-{{ r.id }}">
+                  {{ r.enrichment_json | tojson }}
+                </script>
                 {% else %}
-                <span id="spinner-{{ r.id }}">
-                  <svg
+                <span id="spinner-{{ r.id }}"
+                  ><svg
                     class="animate-spin h-5 w-5 text-surface-container-highest inline"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -335,9 +305,8 @@
                       class="opacity-75"
                       fill="currentColor"
                       d="M4 12a8 8 0 018-8v8H4z"
-                    ></path>
-                  </svg>
-                </span>
+                    ></path></svg
+                ></span>
                 {% endif %}
               </td>
             </tr>
@@ -345,239 +314,286 @@
               class="enrichment-panel bg-surface-dim hidden"
               id="panel-{{ r.id }}"
             >
-              <td colspan="6" class="px-6 py-4">
-                <!-- Content injected by JS -->
-              </td>
+              <td colspan="6" class="px-6 py-4"></td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
+  </div>
+</div>
 
-    <script>
-      const searchId = {{ search.id }};
-      const initialStatus = "{{ search.status }}";
+<script>
+  const searchId = {{ search.id }};
+  const initialStatus = "{{ search.status }}";
 
-      // ── export dropdown toggle ────────────────────────────────────────────────
-      const exportBtn = document.getElementById('export-btn');
-      const exportMenu = document.getElementById('export-menu');
+  // Export dropdown toggle
+  const exportBtn = document.getElementById('export-btn');
+  const exportMenu = document.getElementById('export-menu');
+  if (exportBtn && exportMenu) {
+    exportBtn.addEventListener('click', (e) => { e.stopPropagation(); exportMenu.classList.toggle('hidden'); });
+    document.addEventListener('click', (e) => { if (!exportBtn.contains(e.target) && !exportMenu.contains(e.target)) exportMenu.classList.add('hidden'); });
+  }
 
-      if (exportBtn && exportMenu) {
-          exportBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              exportMenu.classList.toggle('hidden');
-          });
-          document.addEventListener('click', (e) => {
-              if (!exportBtn.contains(e.target) && !exportMenu.contains(e.target)) {
-                  exportMenu.classList.add('hidden');
-              }
-          });
-      }
+  // Toggle all checkboxes
+  const toggleAll = document.getElementById('toggle-all');
+  if (toggleAll) toggleAll.addEventListener('change', function() { document.querySelectorAll('.toggle-included').forEach(cb => { cb.checked = toggleAll.checked; }); });
 
-      // ── toggle all checkboxes ─────────────────────────────────────────────────
-      function initToggleAll() {
-          const toggleAll = document.getElementById('toggle-all');
-          if (!toggleAll) return;
-          toggleAll.addEventListener('change', function() {
-              const checked = toggleAll.checked;
-              document.querySelectorAll('.toggle-included').forEach(cb => {
-                  cb.checked = checked;
-              });
-          });
-      }
-      initToggleAll();
+  function esc(s) { return String(s ?? '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"'); }
 
-      // ── helpers ──────────────────────────────────────────────────────────────
-      function esc(s) {
-          return String(s ?? '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
-      }
+  function buildPanelHTML(enr, observacao) {
+    const emp = enr.empresa || {};
+    const itens = enr.itens_empenho || [];
+    const docs = enr.documentos_relacionados || [];
+    let html = '';
 
-      function buildPanelHTML(enr, observacao) {
-          const emp  = enr.empresa || {};
-          const itens = enr.itens_empenho || [];
-          const docs  = enr.documentos_relacionados || [];
-          let html = '';
+    // Descrição
+    if (observacao) {
+      html += `<div class="mb-3">
+        <p class="text-xs font-semibold text-on-surface-variant uppercase mb-1">Descrição</p>
+        <p class="text-sm text-on-surface whitespace-pre-wrap">${esc(observacao)}</p>
+      </div>`;
+    }
 
-          if (observacao) {
-              html += `<div class="mb-4">
-                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-1">Descrição</p>
-                  <p class="text-body-md text-on-surface whitespace-pre-wrap">${esc(observacao)}</p>
-              </div>`;
-          }
+    // Empresa
+    if (emp.razaoSocial) {
+      let badges = '';
+      if (emp.sancionadoCEIS) badges += `<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium">CEIS</span>`;
+      if (emp.sancionadoCNEP) badges += `<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium">CNEP</span>`;
+      if (emp.sancionadoCEPIM) badges += `<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium">CEPIM</span>`;
+      if (emp.possuiContratacao) badges += `<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Possui contrato</span>`;
+      if (emp.emitiuNFe) badges += `<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Emitiu NF-e</span>`;
+      if (emp.participanteLicitacao) badges += `<span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">Licitações</span>`;
 
-          if (emp.razaoSocial) {
-              const badges = [
-                  emp.sancionadoCEIS   ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-error-container text-on-error-container font-medium">CEIS</span>' : '',
-                  emp.sancionadoCNEP   ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-error-container text-on-error-container font-medium">CNEP</span>' : '',
-                  emp.sancionadoCEPIM  ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-error-container text-on-error-container font-medium">CEPIM</span>' : '',
-                  emp.possuiContratacao? '<span class="px-2 py-1 rounded-sm text-label-sm bg-green-100 text-green-700">Possui contrato</span>' : '',
-                  emp.emitiuNFe        ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-green-100 text-green-700">Emitiu NF-e</span>' : '',
-                  emp.participanteLicitacao ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-primary-container text-on-primary-container">Licitações</span>' : '',
-              ].join('');
-              html += `<div class="mb-4">
-                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-1">Empresa</p>
-                  <p class="text-body-md font-medium text-on-surface">${esc(emp.razaoSocial)}${emp.nomeFantasia ? ' — ' + esc(emp.nomeFantasia) : ''}</p>
-                  <div class="flex gap-2 mt-2 flex-wrap">${badges}</div>
-              </div>`;
-          }
+      const nomeFantasia = emp.nomeFantasia ? ` — ${esc(emp.nomeFantasia)}` : '';
+      html += `<div class="mb-3">
+        <p class="text-xs font-semibold text-on-surface-variant uppercase mb-1">Empresa</p>
+        <p class="text-sm font-medium text-on-surface">${esc(emp.razaoSocial)}${nomeFantasia}</p>
+        <div class="flex gap-2 mt-1 flex-wrap">${badges}</div>
+      </div>`;
+    }
 
-          if (itens.length) {
-              const rows = itens.map(i => {
-                  const hist = (i.historico || []).map(h => `<tr class="bg-surface">
-                      <td></td>
-                      <td colspan="3" class="pr-3 py-1 pl-2 border-l-2 border-amber-300">
-                          <span class="text-label-sm text-on-surface-variant">${esc(h.data)}</span>
-                          <span class="ml-2 text-body-md text-on-surface font-medium">${esc(h.operacao)}</span>
-                          <span class="ml-2 text-label-sm text-on-surface-variant">${esc(h.quantidade)} × ${esc(h.valorUnitario)}</span>
-                          <span class="ml-2 text-body-md text-on-surface font-medium">= ${esc(h.valorTotal)}</span>
-                      </td>
-                  </tr>`).join('');
-                  return `<tr class="border-t border-primary-container/30">
-                      <td class="pr-3 py-2 text-label-sm text-on-surface-variant align-top">${esc(i.sequencial)}</td>
-                      <td class="pr-3 py-2 text-body-md text-on-surface align-top">${esc((i.descricao||'').slice(0,80))}</td>
-                      <td class="pr-3 py-2 text-label-sm text-on-surface-variant align-top">${esc(i.codigoSubelemento)} — ${esc(i.descricaoSubelemento)}</td>
-                      <td class="py-2 text-right text-body-md text-on-surface font-medium align-top">${esc(i.valorAtual)}</td>
-                  </tr>${hist}`;
-              }).join('');
-              html += `<div class="mb-4">
-                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-2">Itens do empenho</p>
-                  <table class="text-label-sm w-full border-collapse">
-                      <thead><tr class="text-left text-on-surface-variant border-b border-primary-container/30">
-                          <th class="pr-3 py-2">Seq</th><th class="pr-3 py-2">Descrição</th>
-                          <th class="pr-3 py-2">Subelemento</th><th class="py-2 text-right">Valor Atual</th>
-                      </tr></thead>
-                      <tbody>${rows}</tbody>
-                  </table>
-              </div>`;
-          }
+    // Itens do empenho
+    if (itens && itens.length > 0) {
+      let tableRows = '';
+      itens.forEach(item => {
+        const desc = (item.descricao || '').substring(0, 80);
+        const subelem = `${item.codigoSubelemento || ''} — ${item.descricaoSubelemento || ''}`;
+        const historico = item.historico || [];
 
-          if (docs.length) {
-              function faseSlug(fase) {
-                  if (fase === 'Liquidação') return 'liquidacao';
-                  if (fase === 'Pagamento')  return 'pagamento';
-                  return 'empenho';
-              }
-              const rows2 = docs.map(d => `<tr class="border-t border-primary-container/30">
-                  <td class="pr-3 py-2 text-label-sm text-on-surface-variant">${esc(d.data)}</td>
-                  <td class="pr-3 py-2 text-body-md text-on-surface-variant">${esc(d.fase)}</td>
-                  <td class="pr-3 py-2">
-                      <a href="https://portaldatransparencia.gov.br/despesas/${faseSlug(d.fase)}/${esc(d.documento)}"
-                         target="_blank" class="text-primary hover:text-on-primary-container font-medium">${esc(d.documentoResumido||d.documento)}</a>
-                  </td>
-                  <td class="py-2 text-label-sm text-on-surface-variant">${esc(d.especie)}</td>
-              </tr>`).join('');
-              html += `<div>
-                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-2">Documentos relacionados</p>
-                  <table class="text-label-sm w-full border-collapse">
-                      <thead><tr class="text-left text-on-surface-variant border-b border-primary-container/30">
-                          <th class="pr-3 py-2">Data</th><th class="pr-3 py-2">Fase</th>
-                          <th class="pr-3 py-2">Documento</th><th class="py-2">Espécie</th>
-                      </tr></thead>
-                      <tbody>${rows2}</tbody>
-                  </table>
-              </div>`;
-          }
+        tableRows += `<tr class="border-t border-surface-container">
+          <td class="pr-3 py-1 text-on-surface-variant align-top">${item.sequencial || ''}</td>
+          <td class="pr-3 py-1 text-on-surface align-top">${esc(desc)}</td>
+          <td class="pr-3 py-1 text-on-surface-variant align-top">${esc(subelem)}</td>
+          <td class="py-1 text-right font-medium text-on-surface align-top">${item.valorAtual || ''}</td>
+        </tr>`;
 
-          return html;
-      }
-
-      function attachExpandBtn(rid) {
-          const btn = document.createElement('button');
-          btn.className = 'expand-btn w-8 h-8 rounded-md text-on-surface-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary';
-          btn.dataset.rid = rid;
-          btn.textContent = '+';
-          btn.type = 'button';
-          btn.addEventListener('click', togglePanel);
-          const spinner = document.getElementById(`spinner-${rid}`);
-          if (spinner) spinner.replaceWith(btn);
-      }
-
-      function togglePanel() {
-          const panel = document.getElementById(`panel-${this.dataset.rid}`);
-          const hidden = panel.classList.toggle('hidden');
-          this.textContent = hidden ? '+' : '−';
-      }
-
-      function activatePanel(rid, enr) {
-          const panel = document.getElementById(`panel-${rid}`);
-          if (!panel) return;
-          const row = panel.previousElementSibling;
-          const observacao = row ? row.dataset.obs || '' : '';
-          panel.querySelector('td').innerHTML = buildPanelHTML(enr, observacao);
-          panel.classList.remove('hidden');
-          panel.classList.add('hidden');
-          attachExpandBtn(rid);
-      }
-
-      // ── expand buttons (server-rendered enriched rows) ────────────────────────
-      document.querySelectorAll('.expand-btn').forEach(btn => btn.addEventListener('click', togglePanel));
-
-      // ── include toggle ────────────────────────────────────────────────────────
-      document.querySelectorAll('.toggle-included').forEach(cb => {
-          cb.addEventListener('change', async () => {
-              const rid = cb.dataset.rid;
-              try {
-                  await fetch(`/searches/${searchId}/results/${rid}`, {
-                      method: 'PATCH',
-                      headers: {'Content-Type': 'application/json'},
-                      body: JSON.stringify({included: cb.checked})
-                  });
-              } catch (e) { cb.checked = !cb.checked; }
-          });
+        historico.forEach(h => {
+          tableRows += `<tr class="bg-surface">
+            <td></td>
+            <td colspan="3" class="pr-3 py-0.5 pl-2 border-l-2 border-amber-300 text-xs">
+              <span class="text-on-surface-variant">${h.data || ''}</span>
+              <span class="ml-2 text-on-surface font-medium">${h.operacao || ''}</span>
+              <span class="ml-2 text-on-surface-variant">${h.quantidade || ''} × ${h.valorUnitario || ''}</span>
+              <span class="ml-2 font-medium text-on-surface">= ${h.valorTotal || ''}</span>
+            </td>
+          </tr>`;
+        });
       });
 
-      // ── enrichment polling ────────────────────────────────────────────────────
-      const enrichBanner  = document.getElementById('enrich-banner');
-      const enrichCountEl = document.getElementById('enrich-count');
-      const enrichBarEl   = document.getElementById('enrich-bar');
+      html += `<div class="mb-3">
+        <p class="text-xs font-semibold text-on-surface-variant uppercase mb-1">Itens do empenho</p>
+        <table class="text-xs w-full border-collapse">
+          <thead>
+            <tr class="text-left text-on-surface-variant border-b border-primary-container">
+              <th class="pr-3 py-1">Seq</th>
+              <th class="pr-3 py-1">Descrição</th>
+              <th class="pr-3 py-1">Subelemento</th>
+              <th class="py-1 text-right">Valor Atual</th>
+            </tr>
+          </thead>
+          <tbody>${tableRows}</tbody>
+        </table>
+      </div>`;
+    }
 
-      const pendingRids    = new Set([...document.querySelectorAll('[id^="spinner-"]')].map(el => el.id.replace('spinner-', '')));
-      const knownEnriched  = new Set([...document.querySelectorAll('.expand-btn')].map(el => el.dataset.rid));
-      const totalRows      = pendingRids.size + knownEnriched.size;
+    // Documentos relacionados
+    if (docs && docs.length > 0) {
+      let docRows = '';
+      docs.forEach(d => {
+        const fase = d.fase || '';
+        const faseSlug = fase === 'Liquidação' ? 'liquidacao' : (fase === 'Pagamento' ? 'pagamento' : 'empenho');
+        const docUrl = `https://portaldatransparencia.gov.br/despesas/${faseSlug}/${d.documento || ''}`;
+        const docLabel = d.documentoResumido || d.documento || '';
+        docRows += `<tr class="border-t border-surface-container">
+          <td class="pr-3 py-1 text-on-surface-variant">${d.data || ''}</td>
+          <td class="pr-3 py-1 text-on-surface">${esc(fase)}</td>
+          <td class="pr-3 py-1">
+            <a href="${docUrl}" target="_blank" class="text-primary hover:text-on-primary-container font-medium">${esc(docLabel)}</a>
+          </td>
+          <td class="py-1 text-on-surface-variant">${esc(d.especie || '')}</td>
+        </tr>`;
+      });
 
-      function updateBanner(enrichedCount) {
-          if (!enrichBanner) return;
-          enrichCountEl.textContent = `${enrichedCount}/${totalRows}`;
-          enrichBarEl.style.width   = `${Math.round(enrichedCount / totalRows * 100)}%`;
-          if (enrichedCount >= totalRows) enrichBanner.classList.add('hidden');
+      html += `<div>
+        <p class="text-xs font-semibold text-on-surface-variant uppercase mb-1">Documentos relacionados</p>
+        <table class="text-xs w-full border-collapse">
+          <thead>
+            <tr class="text-left text-on-surface-variant border-b border-primary-container">
+              <th class="pr-3 py-1">Data</th>
+              <th class="pr-3 py-1">Fase</th>
+              <th class="pr-3 py-1">Documento</th>
+              <th class="py-1">Espécie</th>
+            </tr>
+          </thead>
+          <tbody>${docRows}</tbody>
+        </table>
+      </div>`;
+    }
+
+    return html;
+  }
+
+  function toggleDetails(btn) {
+    const row = btn.closest('tr');
+    const panel = row.nextElementSibling;
+    if (!panel || !panel.classList.contains('enrichment-panel')) return;
+
+    const isHidden = panel.style.display === 'none' || panel.classList.contains('hidden');
+
+    if (isHidden) {
+      panel.style.display = '';
+      panel.classList.remove('hidden');
+      btn.textContent = '−';
+    } else {
+      panel.style.display = 'none';
+      panel.classList.add('hidden');
+      btn.textContent = '+';
+    }
+  }
+
+  function attachExpandBtn(rid) {
+    const spinner = document.getElementById('spinner-' + rid);
+    if (!spinner) return;
+
+    const btn = document.createElement('button');
+    btn.className = 'expand-btn w-8 h-8 rounded-md text-on-surface-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary';
+    btn.dataset.rid = rid;
+    btn.textContent = '+';
+    btn.type = 'button';
+    btn.addEventListener('click', function() { toggleDetails(this); });
+    spinner.replaceWith(btn);
+  }
+
+  function activatePanel(rid, enr) {
+    const panel = document.getElementById('panel-' + rid);
+    if (!panel) {
+      console.error('Panel not found for rid:', rid);
+      return;
+    }
+
+    const row = panel.previousElementSibling;
+    const observacao = row ? row.dataset.obs || '' : '';
+
+    // Build and insert the panel content
+    const content = buildPanelHTML(enr, observacao);
+    const td = panel.querySelector('td');
+    if (td) {
+      td.innerHTML = content;
+    }
+
+    // Attach expand button
+    attachExpandBtn(rid);
+
+    console.log('Panel activated for rid:', rid, 'content length:', content.length);
+  }
+
+  // Initialize panels on page load for results that already have enrichment_json
+  function initPreEnrichedPanels() {
+    document.querySelectorAll('tr[data-rid]').forEach(row => {
+      const rid = row.dataset.rid;
+      const panel = document.getElementById('panel-' + rid);
+      if (!panel) return;
+
+      // Check if this result has enrichment data from JSON script element
+      const enrichDataEl = document.getElementById('enrich-data-' + rid);
+      if (enrichDataEl) {
+        try {
+          const enr = JSON.parse(enrichDataEl.textContent);
+          activatePanel(rid, enr);
+        } catch (e) {
+          console.error('Failed to parse enrichment data for rid:', rid, e);
+        }
       }
+    });
+  }
 
-      async function pollEnrichments() {
-          if (pendingRids.size === 0) return;
-          try {
-              const r = await fetch(`/searches/${searchId}/enrichments`);
-              const items = await r.json();
-              for (const item of items) {
-                  const rid = String(item.id);
-                  if (pendingRids.has(rid)) {
-                      activatePanel(rid, item.enrichment_json);
-                      pendingRids.delete(rid);
-                      knownEnriched.add(rid);
-                  }
-              }
-              updateBanner(knownEnriched.size);
-          } catch (e) {}
+  // Run initialization on DOM ready
+  document.addEventListener('DOMContentLoaded', initPreEnrichedPanels);
 
-          if (pendingRids.size > 0) setTimeout(pollEnrichments, 2000);
+  // Attach click handlers to all expand buttons (including dynamically added ones)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.expand-btn');
+    if (btn) {
+      e.preventDefault();
+      toggleDetails(btn);
+    }
+  });
+
+  // Include toggle
+  document.querySelectorAll('.toggle-included').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const rid = cb.dataset.rid;
+      try { await fetch(`/searches/${searchId}/results/${rid}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({included: cb.checked}) }); }
+      catch (e) { cb.checked = !cb.checked; }
+    });
+  });
+
+  // Enrichment polling
+  const enrichBanner = document.getElementById('enrich-banner');
+  const enrichCountEl = document.getElementById('enrich-count');
+  const enrichBarEl = document.getElementById('enrich-bar');
+  const pendingRids = new Set([...document.querySelectorAll('[id^="spinner-"]')].map(el => el.id.replace('spinner-', '')));
+  const knownEnriched = new Set([...document.querySelectorAll('.expand-btn')].map(el => el.dataset.rid));
+  const totalRows = pendingRids.size + knownEnriched.size;
+
+  function updateBanner(enrichedCount) {
+    if (!enrichBanner) return;
+    enrichCountEl.textContent = `${enrichedCount}/${totalRows}`;
+    enrichBarEl.style.width = `${Math.round(enrichedCount / totalRows * 100)}%`;
+    if (enrichedCount >= totalRows) enrichBanner.classList.add('hidden');
+  }
+
+  async function pollEnrichments() {
+    if (pendingRids.size === 0) return;
+    try {
+      const r = await fetch(`/searches/${searchId}/enrichments`);
+      const items = await r.json();
+      for (const item of items) {
+        const rid = String(item.id);
+        if (pendingRids.has(rid)) { activatePanel(rid, item.enrichment_json); pendingRids.delete(rid); knownEnriched.add(rid); }
       }
+      updateBanner(knownEnriched.size);
+    } catch (e) {}
+    if (pendingRids.size > 0) setTimeout(pollEnrichments, 2000);
+  }
 
-      if (pendingRids.size > 0) setTimeout(pollEnrichments, 2000);
+  if (pendingRids.size > 0) setTimeout(pollEnrichments, 2000);
 
-      // ── fetch_search_results polling ──────────────────────────────────────────
-      if (initialStatus === 'pending' || initialStatus === 'fetching') {
-          const badge = document.getElementById('status-badge');
-          const pollStatus = async () => {
-              try {
-                  const r = await fetch(`/searches/${searchId}/status`);
-                  const j = await r.json();
-                  badge.textContent = j.status;
-                  if (j.status === 'done' || j.status === 'error') { location.reload(); return; }
-              } catch (e) {}
-              setTimeout(pollStatus, 3000);
-          };
-          setTimeout(pollStatus, 2000);
-      }
-    </script>
-  </body>
-</html>
+  // Status polling
+  if (initialStatus === 'pending' || initialStatus === 'fetching') {
+    const badge = document.getElementById('status-badge');
+    const pollStatus = async () => {
+      try {
+        const r = await fetch(`/searches/${searchId}/status`);
+        const j = await r.json();
+        badge.textContent = j.status;
+        if (j.status === 'done' || j.status === 'error') { location.reload(); return; }
+      } catch (e) {}
+      setTimeout(pollStatus, 3000);
+    };
+    setTimeout(pollStatus, 2000);
+  }
+</script>
+{% endblock %}

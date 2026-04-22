@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal da Transparência — Empenho</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:#FFF;}
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+  main{flex:1;}
+  button{font-family:var(--font-sans);}
+  table{font-feature-settings:"tnum" on;}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="text/babel" src="./GovbrBar.jsx"></script>
+<script type="text/babel" src="./PortalHeader.jsx"></script>
+<script type="text/babel" src="./Breadcrumb.jsx"></script>
+<script type="text/babel" src="./SearchPanel.jsx"></script>
+<script type="text/babel" src="./ResultList.jsx"></script>
+<script type="text/babel" src="./EmpenhoDetail.jsx"></script>
+<script type="text/babel" src="./Footer.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  const [view, setView] = React.useState(() => localStorage.getItem('pt_view') || 'search');
+  const [selected, setSelected] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem('pt_sel')) || null; } catch { return null; }
+  });
+  React.useEffect(() => {
+    localStorage.setItem('pt_view', view);
+    localStorage.setItem('pt_sel', JSON.stringify(selected));
+  }, [view, selected]);
+
+  const crumbs = {
+    search:  [{ label:'Início', target:'search' },{ label:'Despesas' },{ label:'Recursos recebidos' },{ label:'Empenho' }],
+    results: [{ label:'Início', target:'search' },{ label:'Despesas' },{ label:'Empenho', target:'search' },{ label:'Resultados da consulta' }],
+    detail:  [{ label:'Início', target:'search' },{ label:'Despesas' },{ label:'Empenho', target:'search' },{ label:'Resultados', target:'results' },{ label: selected?.num || '' }],
+  }[view];
+
+  return (
+    <div data-screen-label={'01 '+view}>
+      <GovbrBar/>
+      <PortalHeader onHome={() => setView('search')}/>
+      <Breadcrumb items={crumbs} onNavigate={setView}/>
+      <main>
+        {view === 'search' && <SearchPanel onSearch={() => setView('results')}/>}
+        {view === 'results' && <ResultList onOpen={(e) => { setSelected(e); setView('detail'); }}/>}
+        {view === 'detail' && selected && <EmpenhoDetail empenho={selected} onBack={() => setView('results')}/>}
+      </main>
+      <Footer/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('app')).render(<App/>);
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git commit -m 'fix: remove db.create_all\\(\\) from module load to avoid race condition *)",
+      "Bash(python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['src/app.py','src/tasks.py','src/auth/models.py']]; print\\('OK'\\)\")",
+      "WebFetch(domain:api.portaldatransparencia.gov.br)",
+      "Bash(git -C \"a:/VogelCodes/gh/portal-transparencia\" status)",
+      "Bash(git -C \"a:/VogelCodes/gh/portal-transparencia\" diff HEAD)",
+      "Bash(git -C \"a:/VogelCodes/gh/portal-transparencia\" log --oneline -5)",
+      "Bash(git -C \"a:/VogelCodes/gh/portal-transparencia\" push)",
+      "Bash(python test_enrichment.py)",
+      "Bash(python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['src/tasks.py','src/exports/__init__.py','src/exports/parse.py','src/exports/serializer.py','src/exports/ods_renderer.py']]; print\\('syntax OK'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import ast; [ast.parse\\(open\\(f\\).read\\(\\)\\) for f in ['src/tasks.py','src/exports/__init__.py','src/exports/parse.py','src/exports/serializer.py','src/exports/ods_renderer.py']]; print\\('OK'\\)\")"
+    ]
+  }
+}

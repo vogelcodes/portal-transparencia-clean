@@ -13,7 +13,9 @@ from src.auth import auth_bp
 from src.auth.models import User, Search, SearchResult
 from src.auth.decorators import require_auth
 
-app = Flask(__name__)
+# Configure static folder for design system CSS
+static_folder_path = os.path.join(os.path.dirname(__file__), 'static')
+app = Flask(__name__, static_folder=static_folder_path, static_url_path='/static')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', '')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

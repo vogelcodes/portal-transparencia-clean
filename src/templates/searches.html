@@ -1,103 +1,106 @@
-<!doctype html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Minhas Buscas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              surface: "#FFFFFF",
-              "surface-dim": "#FAFAFA",
-              "surface-container": "#F8F8F8",
-              "on-surface": "#1a1a1a",
-              "on-surface-variant": "#333333",
-              primary: "#1351B4",
-              "on-primary": "#FFFFFF",
-              "primary-container": "#E8F0FE",
-              "on-primary-container": "#0D47A1",
-              error: "#B00020",
-              background: "#FFFFFF",
-            },
-            fontFamily: {
-              rawline: ["Raleway", "sans-serif"],
-            },
-            borderRadius: {
-              sm: "2px",
-              DEFAULT: "3px",
-              md: "4px",
-              lg: "6px",
-              xl: "12px",
-            },
-            boxShadow: {
-              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
-              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
-            },
-          },
+{% extends "base.html" %} {% block title %}<title>
+  Minhas Buscas - Portal Transparência</title
+>{% endblock %} {% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          surface: "var(--color-surface)",
+          "surface-dim": "var(--color-surface-dim)",
+          "surface-container": "var(--color-surface-container)",
+          "surface-container-high": "var(--color-surface-container-high)",
+          "surface-container-highest": "var(--color-surface-container-highest)",
+          "on-surface": "var(--color-on-surface)",
+          "on-surface-variant": "var(--color-on-surface-variant)",
+          primary: "var(--color-primary)",
+          "on-primary": "var(--color-on-primary)",
+          "primary-container": "var(--color-primary-container)",
+          "on-primary-container": "var(--color-on-primary-container)",
+          secondary: "var(--color-secondary)",
+          "on-secondary": "var(--color-on-secondary)",
+          "secondary-container": "var(--color-secondary-container)",
+          "on-secondary-container": "var(--color-on-secondary-container)",
+          error: "var(--color-error)",
+          "on-error": "var(--color-on-error)",
+          "error-container": "var(--color-error-container)",
+          "on-error-container": "var(--color-on-error-container)",
+          background: "var(--color-background)",
         },
-      };
-    </script>
-  </head>
-  <body class="bg-background min-h-screen p-6 font-rawline">
-    <div class="max-w-5xl mx-auto bg-surface rounded-lg shadow-elevated p-6">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-headline-lg text-on-surface font-semibold">
-          Minhas Buscas
-        </h1>
-        <a
-          href="/"
-          class="inline-flex py-3 px-6 rounded-md text-label-sm font-semibold uppercase tracking-wide text-on-primary bg-primary hover:bg-on-primary-container shadow-card"
-        >
-          Nova Busca
-        </a>
-      </div>
+        fontFamily: {
+          rawline: ["Rawline", "Raleway", "sans-serif"],
+        },
+        borderRadius: {
+          sm: "2px",
+          DEFAULT: "3px",
+          md: "4px",
+          lg: "6px",
+          xl: "12px",
+        },
+        boxShadow: {
+          card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+          elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+        },
+      },
+    },
+  };
+</script>
+{% endblock %} {% block content %}
+<div class="p-6">
+  <div class="max-w-5xl mx-auto bg-surface rounded-lg shadow-elevated p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-headline-lg text-on-surface font-semibold">
+        Minhas Buscas
+      </h1>
+      <a href="/" class="btn btn-primary"> Nova Busca </a>
+    </div>
 
-      {% if not searches %}
-      <p class="text-body-md text-on-surface-variant">Nenhuma busca ainda.</p>
-      {% else %}
-      <table class="min-w-full divide-y divide-surface-container">
-        <thead class="bg-surface-dim">
+    {% if not searches %}
+    <p class="text-body-md text-on-surface-variant">Nenhuma busca ainda.</p>
+    {% else %}
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
           <tr>
             <th
-              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+              class="text-left font-label-sm text-on-surface-variant uppercase tracking-wide px-4 py-3"
             >
               Nome
             </th>
             <th
-              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+              class="text-left font-label-sm text-on-surface-variant uppercase tracking-wide px-4 py-3"
             >
               CNPJ
             </th>
             <th
-              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+              class="text-left font-label-sm text-on-surface-variant uppercase tracking-wide px-4 py-3"
             >
               Pregão
             </th>
             <th
-              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+              class="text-left font-label-sm text-on-surface-variant uppercase tracking-wide px-4 py-3"
             >
               Status
             </th>
             <th
-              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+              class="text-left font-label-sm text-on-surface-variant uppercase tracking-wide px-4 py-3"
             >
               Criada
             </th>
-            <th></th>
+            <th class="px-4 py-3"></th>
           </tr>
         </thead>
-        <tbody class="bg-surface divide-y divide-surface-container">
+        <tbody class="divide-y divide-surface-container">
           {% for s in searches %}
           <tr class="hover:bg-surface-dim">
-            <td class="px-4 py-4 text-body-md font-medium text-primary">
+            <td class="px-4 py-4">
               <a
                 href="/searches/{{ s.id }}"
-                class="hover:text-on-primary-container"
-                >{{ s.name or ('#' ~ s.id) }}</a
+                class="text-primary hover:text-on-primary-container font-medium"
               >
+                {{ s.name or ('#' ~ s.id) }}
+              </a>
             </td>
             <td class="px-4 py-4 text-body-md text-on-surface">{{ s.cnpj }}</td>
             <td class="px-4 py-4 text-body-md text-on-surface">
@@ -105,7 +108,7 @@
             </td>
             <td class="px-4 py-4">
               <span
-                class="px-3 py-1 rounded-sm text-label-sm font-medium {% if s.status == 'done' %}bg-green-100 text-green-800 {% elif s.status == 'error' %}bg-error-container text-on-error-container {% else %}bg-amber-100 text-amber-800{% endif %}"
+                class="badge {% if s.status == 'done' %}badge-emitido{% elif s.status == 'error' %}badge-cancelado{% else %}badge-pending{% endif %}"
               >
                 {{ s.status }}
               </span>
@@ -122,7 +125,8 @@
               >
                 <input type="hidden" name="_method" value="DELETE" />
                 <button
-                  class="text-label-sm text-error hover:text-on-error-container"
+                  type="submit"
+                  class="font-label-sm text-error hover:text-on-error-container"
                 >
                   Excluir
                 </button>
@@ -132,7 +136,8 @@
           {% endfor %}
         </tbody>
       </table>
-      {% endif %}
     </div>
-  </body>
-</html>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

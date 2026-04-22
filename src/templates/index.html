@@ -4,26 +4,37 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Busca de Empenhos</title>
+    <!-- Google Fonts - Raleway (fallback for Rawline) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Design System CSS (provides CSS variables + utility classes) -->
+    <link rel="stylesheet" href="/static/css/design-system.css" />
+    <!-- Tailwind for utility classes -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              surface: "#FFFFFF",
-              "surface-dim": "#FAFAFA",
-              "surface-container": "#F8F8F8",
-              "surface-container-high": "#F0F0F0",
-              "surface-container-highest": "#E8E8E8",
-              "on-surface": "#1a1a1a",
-              "on-surface-variant": "#333333",
-              primary: "#1351B4",
-              "on-primary": "#FFFFFF",
-              "primary-container": "#E8F0FE",
-              "on-primary-container": "#0D47A1",
-              secondary: "#455A64",
-              error: "#B00020",
-              background: "#FFFFFF",
+              surface: "var(--color-surface)",
+              "surface-dim": "var(--color-surface-dim)",
+              "surface-container": "var(--color-surface-container)",
+              "surface-container-high": "var(--color-surface-container-high)",
+              "surface-container-highest":
+                "var(--color-surface-container-highest)",
+              "on-surface": "var(--color-on-surface)",
+              "on-surface-variant": "var(--color-on-surface-variant)",
+              primary: "var(--color-primary)",
+              "on-primary": "var(--color-on-primary)",
+              "primary-container": "var(--color-primary-container)",
+              "on-primary-container": "var(--color-on-primary-container)",
+              secondary: "var(--color-secondary)",
+              error: "var(--color-error)",
+              background: "var(--color-background)",
             },
             fontFamily: {
               rawline: ["Rawline", "Raleway", "sans-serif"],
@@ -48,14 +59,6 @@
   <body
     class="bg-background min-h-screen flex items-center justify-center p-6 font-rawline"
   >
-    <!-- Google Fonts - Rawline -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-
     <div class="w-full max-w-lg">
       <!-- Header Card -->
       <div class="bg-surface-dim rounded-lg shadow-card p-6 mb-6">
@@ -70,23 +73,18 @@
               Busca de Empenhos Governamentais
             </p>
           </div>
-          <a
-            href="/searches"
-            class="text-label-sm text-primary hover:text-on-primary-container font-medium px-4 py-2 rounded-md hover:bg-primary-container transition-colors"
-          >
-            Minhas buscas →
-          </a>
+          <a href="/searches" class="btn btn-ghost"> Minhas buscas → </a>
         </div>
       </div>
 
-      <!-- Form Card -->
-      <div class="bg-surface rounded-lg shadow-elevated p-8">
+      <!-- Form Card (using design-system card-elevated pattern) -->
+      <div class="card-elevated p-8">
         <form action="/searches" method="POST" class="space-y-6">
           <!-- CNPJ Field -->
           <div>
             <label
               for="cnpj"
-              class="block text-label-sm text-on-surface font-semibold uppercase tracking-wide mb-2"
+              class="block font-label-sm text-on-surface uppercase mb-2"
             >
               CNPJ do Fornecedor
             </label>
@@ -95,11 +93,11 @@
               id="cnpj"
               name="cnpj"
               value="47.149.673/0001-71"
-              class="w-full bg-surface-container text-on-surface text-body-md rounded-md border border-on-surface-variant px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+              class="input-field"
               placeholder="00.000.000/0000-00"
               required
             />
-            <p class="text-label-sm text-on-surface-variant mt-2">
+            <p class="font-label-sm text-on-surface-variant mt-2">
               CNPJ da empresa para buscar empenhos
             </p>
           </div>
@@ -108,7 +106,7 @@
           <div>
             <label
               for="pregao"
-              class="block text-label-sm text-on-surface font-semibold uppercase tracking-wide mb-2"
+              class="block font-label-sm text-on-surface uppercase mb-2"
             >
               Número do Pregão
             </label>
@@ -118,9 +116,9 @@
               name="pregao"
               value=""
               placeholder="Ex: 90021"
-              class="w-full bg-surface-container text-on-surface text-body-md rounded-md border border-on-surface-variant px-4 py-3 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors placeholder:text-on-surface-variant/60"
+              class="input-field"
             />
-            <p class="text-label-sm text-on-surface-variant mt-2">
+            <p class="font-label-sm text-on-surface-variant mt-2">
               Deixe em branco para listar todos os empenhos
             </p>
           </div>
@@ -129,10 +127,7 @@
           <hr class="border-surface-container-high" />
 
           <!-- Submit Button -->
-          <button
-            type="submit"
-            class="w-full bg-primary text-on-primary text-label-sm font-semibold uppercase tracking-wide rounded-md px-6 py-3 hover:bg-on-primary-container focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors shadow-card"
-          >
+          <button type="submit" class="btn btn-primary w-full">
             Buscar Empenhos
           </button>
         </form>
@@ -140,7 +135,7 @@
 
       <!-- Footer Info -->
       <div class="mt-6 text-center">
-        <p class="text-label-sm text-on-surface-variant">
+        <p class="font-label-sm text-on-surface-variant">
           Dados extraídos do Portal da Transparência
         </p>
       </div>

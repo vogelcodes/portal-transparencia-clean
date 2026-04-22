@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {% block title %}
+    <title>Portal Transparência</title>
+    {% endblock %}
+
+    <!-- Design System CSS (provides CSS variables + utility classes) -->
+    <link rel="stylesheet" href="/static/css/design-system.css" />
+
+    {% block extra_head %}{% endblock %}
+  </head>
+
+  <body class="bg-background min-h-screen">
+    {% block content %}{% endblock %}
+  </body>
+</html>

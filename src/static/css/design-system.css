@@ -1,0 +1,723 @@
+/* ==========================================================================
+   Portal da Transparência — Design System
+   Based on gov.br design patterns + claude-design components
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   @font-face - Anthropic Font
+   -------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Anthropic";
+  src: url("/static/AnthropicSans.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* --------------------------------------------------------------------------
+   CSS Custom Properties (Design Tokens)
+   -------------------------------------------------------------------------- */
+:root {
+  /* Colors - Surface */
+  --color-surface: #ffffff;
+  --color-surface-dim: #fafafa;
+  --color-surface-bright: #f8f8f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fafafa;
+  --color-surface-container: #f8f8f8;
+  --color-surface-container-high: #f0f0f0;
+  --color-surface-container-highest: #e8e8e8;
+
+  /* Colors - On Surface */
+  --color-on-surface: #1a1a1a;
+  --color-on-surface-variant: #333333;
+  --color-inverse-surface: #1a1a1a;
+  --color-inverse-on-surface: #ffffff;
+
+  /* Colors - Outline */
+  --color-outline: #333333;
+  --color-outline-variant: #cccccc;
+  --color-surface-tint: #1351b4;
+
+  /* Colors - Primary */
+  --color-primary: #1351b4;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e8f0fe;
+  --color-on-primary-container: #0d47a1;
+  --color-inverse-primary: #90caf9;
+  --color-primary-fixed: #1351b4;
+  --color-primary-fixed-dim: #0d47a1;
+  --color-on-primary-fixed: #ffffff;
+  --color-on-primary-fixed-variant: #e3f2fd;
+
+  /* Colors - Secondary */
+  --color-secondary: #455a64;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #eceff1;
+  --color-on-secondary-container: #37474f;
+  --color-secondary-fixed: #455a64;
+  --color-secondary-fixed-dim: #37474f;
+  --color-on-secondary-fixed: #ffffff;
+  --color-on-secondary-fixed-variant: #eceff1;
+
+  /* Colors - Tertiary */
+  --color-tertiary: #071d41;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #e3f2fd;
+  --color-on-tertiary-container: #0d47a1;
+
+  /* Colors - Error */
+  --color-error: #b00020;
+  --color-on-error: #ffffff;
+  --color-error-container: #fdecea;
+  --color-on-error-container: #b00020;
+
+  /* Colors - Semantic */
+  --color-background: #ffffff;
+  --color-surface-muted: #071d41;
+  --color-border: #333333;
+
+  /* Typography */
+  --font-sans: "Anthropic", "Rawline", "Raleway", "Segoe UI", sans-serif;
+  --font-mono: "Fira Code", "Consolas", monospace;
+
+  /* Font Sizes */
+  --text-display-lg: 34.832px;
+  --text-headline-lg: 28px;
+  --text-headline-md: 24px;
+  --text-body-lg: 18px;
+  --text-body-md: 16px;
+  --text-label-sm: 12px;
+
+  /* Border Radius */
+  --radius-sm: 2px;
+  --radius-default: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Spacing */
+  --spacing-unit: 8px;
+  --spacing-container: 24px;
+  --spacing-card: 16px;
+  --spacing-section: 40px;
+
+  /* Shadows */
+  --shadow-card: 0 6px 6px rgba(0, 0, 0, 0.16);
+  --shadow-elevated: 0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+}
+
+/* --------------------------------------------------------------------------
+   Base Styles
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-md);
+  line-height: 1.5;
+  color: var(--color-on-surface);
+  background-color: var(--color-background);
+  margin: 0;
+  padding: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Typography Classes
+   -------------------------------------------------------------------------- */
+.font-display-lg {
+  font-size: var(--text-display-lg);
+  font-weight: 600;
+  line-height: 40.0568px;
+  letter-spacing: -0.02em;
+}
+
+.font-headline-lg {
+  font-size: var(--text-headline-lg);
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: -0.01em;
+}
+
+.font-headline-md {
+  font-size: var(--text-headline-md);
+  font-weight: 500;
+  line-height: 32px;
+}
+
+.font-body-lg {
+  font-size: var(--text-body-lg);
+  font-weight: 400;
+  line-height: 26px;
+}
+
+.font-body-md {
+  font-size: var(--text-body-md);
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.font-label-sm {
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   Color Utility Classes
+   -------------------------------------------------------------------------- */
+.text-primary {
+  color: var(--color-primary);
+}
+.text-on-primary {
+  color: var(--color-on-primary);
+}
+.text-primary-container {
+  color: var(--color-primary-container);
+}
+.text-on-primary-container {
+  color: var(--color-on-primary-container);
+}
+
+.text-secondary {
+  color: var(--color-secondary);
+}
+.text-on-secondary {
+  color: var(--color-on-secondary);
+}
+.text-secondary-container {
+  color: var(--color-secondary-container);
+}
+.text-on-secondary-container {
+  color: var(--color-on-secondary-container);
+}
+
+.text-tertiary {
+  color: var(--color-tertiary);
+}
+.text-on-tertiary {
+  color: var(--color-on-tertiary);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+.text-on-error {
+  color: var(--color-on-error);
+}
+.text-error-container {
+  color: var(--color-error-container);
+}
+.text-on-error-container {
+  color: var(--color-on-error-container);
+}
+
+.text-on-surface {
+  color: var(--color-on-surface);
+}
+.text-on-surface-variant {
+  color: var(--color-on-surface-variant);
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+.bg-surface-dim {
+  background-color: var(--color-surface-dim);
+}
+.bg-surface-container {
+  background-color: var(--color-surface-container);
+}
+.bg-surface-container-high {
+  background-color: var(--color-surface-container-high);
+}
+.bg-surface-container-highest {
+  background-color: var(--color-surface-container-highest);
+}
+
+.bg-primary {
+  background-color: var(--color-primary);
+}
+.bg-primary-container {
+  background-color: var(--color-primary-container);
+}
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+.bg-secondary-container {
+  background-color: var(--color-secondary-container);
+}
+.bg-error-container {
+  background-color: var(--color-error-container);
+}
+
+.border-surface-container {
+  border-color: var(--color-surface-container);
+}
+.border-surface-container-high {
+  border-color: var(--color-surface-container-high);
+}
+.border-primary {
+  border-color: var(--color-primary);
+}
+.border-error {
+  border-color: var(--color-error);
+}
+
+/* --------------------------------------------------------------------------
+   Border Radius Classes
+   -------------------------------------------------------------------------- */
+.rounded-sm {
+  border-radius: var(--radius-sm);
+}
+.rounded-default {
+  border-radius: var(--radius-default);
+}
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+.rounded-full {
+  border-radius: var(--radius-full);
+}
+
+/* --------------------------------------------------------------------------
+   Shadow Classes
+   -------------------------------------------------------------------------- */
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+.shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+.shadow-glass {
+  box-shadow: var(--shadow-glass);
+}
+
+/* --------------------------------------------------------------------------
+   Button Component
+   Based on claude-design patterns
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 24px;
+  font-family: var(--font-sans);
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border: none;
+  border-radius: var(--radius-default);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.3);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-fixed-dim);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-primary-container);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-primary);
+}
+
+.btn-ghost:hover {
+  background-color: var(--color-primary-container);
+}
+
+/* --------------------------------------------------------------------------
+   Input Field Component
+   Based on claude-design patterns
+   -------------------------------------------------------------------------- */
+.input-field {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--font-sans);
+  font-size: var(--text-body-md);
+  line-height: 24px;
+  color: var(--color-on-surface);
+  background-color: var(--color-surface-container);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.input-field::placeholder {
+  color: var(--color-on-surface-variant);
+  opacity: 0.6;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Card Components
+   Based on claude-design patterns
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-card);
+}
+
+.card-elevated {
+  background-color: var(--color-surface-container-highest);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-card);
+  box-shadow: var(--shadow-card);
+}
+
+.card-dim {
+  background-color: var(--color-surface-dim);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* --------------------------------------------------------------------------
+   Badge / Status Indicator
+   Based on claude-design patterns (EmpenhoDetail.jsx)
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-family: var(--font-sans);
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+}
+
+.badge-emitido {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.badge-liquidado {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.badge-cancelado {
+  background-color: var(--color-error-container);
+  color: var(--color-on-error-container);
+}
+
+.badge-pending {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+/* --------------------------------------------------------------------------
+   Table Styles
+   Based on claude-design patterns (ResultList.jsx)
+   -------------------------------------------------------------------------- */
+.table-container {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-surface-container-highest);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-feature-settings: "tnum" on;
+}
+
+.data-table thead {
+  background-color: var(--color-surface-dim);
+}
+
+.data-table thead th {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+  border-bottom: 1px solid #ccc;
+}
+
+.data-table thead th.text-right {
+  text-align: right;
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--color-surface-container);
+  transition: background-color var(--transition-fast);
+}
+
+.data-table tbody tr:hover {
+  background-color: var(--color-surface-dim);
+}
+
+.data-table tbody td {
+  padding: 14px 16px;
+  font-size: var(--text-body-md);
+  color: var(--color-on-surface);
+}
+
+.data-table tbody td.font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table tbody td.text-right {
+  text-align: right;
+}
+
+.data-table tbody td.link {
+  color: var(--color-primary);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.data-table tbody td.link:hover {
+  color: var(--color-on-primary-container);
+}
+
+/* --------------------------------------------------------------------------
+   Metric Display
+   Based on claude-design patterns (EmpenhoDetail.jsx)
+   -------------------------------------------------------------------------- */
+.metric-card {
+  padding: 18px 20px;
+  background-color: var(--color-surface-dim);
+  border-radius: var(--radius-lg);
+  flex: 1;
+  min-width: 180px;
+}
+
+.metric-label {
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: var(--text-headline-md);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-value.big {
+  font-size: var(--text-display-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   Info Row
+   Based on claude-design patterns (EmpenhoDetail.jsx)
+   -------------------------------------------------------------------------- */
+.info-row {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-surface-container);
+}
+
+.info-row-label {
+  font-size: var(--text-label-sm);
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-row-value {
+  font-size: var(--text-body-md);
+  color: var(--color-on-surface);
+}
+
+/* --------------------------------------------------------------------------
+   Section Layout
+   Based on claude-design patterns
+   -------------------------------------------------------------------------- */
+.section {
+  padding: 32px var(--spacing-container);
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.section-narrow {
+  padding: 32px var(--spacing-container);
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes
+   -------------------------------------------------------------------------- */
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-container);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gap-sm {
+  gap: 8px;
+}
+.gap-md {
+  gap: 16px;
+}
+.gap-lg {
+  gap: 24px;
+}
+
+.mt-sm {
+  margin-top: 8px;
+}
+.mt-md {
+  margin-top: 16px;
+}
+.mt-lg {
+  margin-top: 24px;
+}
+.mt-xl {
+  margin-top: 32px;
+}
+
+.mb-sm {
+  margin-bottom: 8px;
+}
+.mb-md {
+  margin-bottom: 16px;
+}
+.mb-lg {
+  margin-bottom: 24px;
+}
+.mb-xl {
+  margin-bottom: 32px;
+}
+
+/* Focus ring for accessibility */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(19, 81, 180, 0.3);
+}
+
+/* Loading spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-surface-container);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dividers */
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-surface-container);
+}
+
+.divider-thick {
+  border: none;
+  border-top: 1px solid var(--color-surface-container-highest);
+}
+
+/* Text utilities */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Transitions */
+.transition-colors {
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.transition-all {
+  transition: all var(--transition-normal);
+}
