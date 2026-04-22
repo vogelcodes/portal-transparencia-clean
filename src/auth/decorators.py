@@ -17,11 +17,13 @@ def require_auth(f):
             token = session.get('token')
 
         if token:
-            from src.auth.utils import verify_jwt
+            from src.auth.utils import verify_jwt, hash_session_token
             payload = verify_jwt(token, current_app.config['SECRET_KEY'])
             if payload:
                 from src.auth.models import UserSession, User
-                session_obj = UserSession.query.filter_by(token=token, is_active=True).first()
+                session_obj = UserSession.query.filter_by(
+                    token=hash_session_token(token), is_active=True
+                ).first()
                 if session_obj and not session_obj.is_expired:
                     user = User.query.get(payload['user_id'])
                     if user and user.is_active:
@@ -59,17 +61,19 @@ def require_role(*roles):
 def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        api_key = request.headers.get('X-API-Key') or request.args.get('api_key')
+        # API key accepted only via header — query params leak into access
+        # logs, proxy caches, and browser history.
+        api_key = request.headers.get('X-API-Key')
         if not api_key:
             return jsonify({'error': 'API key required'}), 401
 
-        from src.auth.utils import hash_api_key
+        from src.auth.utils import hash_api_key, verify_api_key
         from src.auth.models import ApiKey
         from src.db import db
 
         api_key_hash = hash_api_key(api_key)
         api_key_obj = ApiKey.query.filter_by(api_key_hash=api_key_hash, is_active=True).first()
-        if not api_key_obj:
+        if not api_key_obj or not verify_api_key(api_key, api_key_obj.api_key_hash):
             return jsonify({'error': 'Invalid API key'}), 401
 
         from datetime import datetime, timezone

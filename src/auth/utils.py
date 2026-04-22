@@ -1,16 +1,11 @@
 """
 Security Utilities - Salt, Pepper, and Hash
 """
-import os
 import bcrypt
 import hashlib
 import secrets
 import hmac
-import json
-import time
 import jwt
-from base64 import urlsafe_b64encode, urlsafe_b64decode
-from collections import defaultdict
 from datetime import datetime, timezone
 
 
@@ -52,8 +47,14 @@ def hash_api_key(api_key: str) -> str:
 
 
 def verify_api_key(api_key: str, api_key_hash: str) -> bool:
-    """Verify an API key against stored hash"""
-    return hash_api_key(api_key) == api_key_hash
+    """Verify an API key against stored hash (timing-safe)."""
+    return hmac.compare_digest(hash_api_key(api_key), api_key_hash)
+
+
+def hash_session_token(token: str) -> str:
+    """Hash a JWT before persisting/looking-up in DB. Prevents raw token
+    exposure if the DB is compromised."""
+    return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
 def validate_password_strength(password: str) -> tuple[bool, str]:
@@ -82,53 +83,45 @@ def sanitize_email(email: str) -> str:
     return email.strip().lower()
 
 
-class RateLimiter:
-    """Simple in-memory rate limiter for login attempts."""
-    
-    _instance = None
-    _attempts = defaultdict(list)
-    _lockout_until = defaultdict(float)
-    
-    MAX_ATTEMPTS = 5
-    LOCKOUT_DURATION = 300
-    WINDOW = 300
-    
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-    
-    def is_locked_out(self, identifier: str) -> bool:
-        if identifier in self._lockout_until:
-            if time.time() < self._lockout_until[identifier]:
-                return True
-            else:
-                del self._lockout_until[identifier]
-                if identifier in self._attempts:
-                    self._attempts[identifier] = []
-        return False
-    
-    def record_attempt(self, identifier: str) -> None:
-        current_time = time.time()
-        self._attempts[identifier].append(current_time)
-        self._attempts[identifier] = [
-            t for t in self._attempts[identifier]
-            if current_time - t < self.WINDOW
-        ]
-        if len(self._attempts[identifier]) >= self.MAX_ATTEMPTS:
-            self._lockout_until[identifier] = current_time + self.LOCKOUT_DURATION
-    
-    def record_success(self, identifier: str) -> None:
-        if identifier in self._attempts:
-            del self._attempts[identifier]
-        if identifier in self._lockout_until:
-            del self._lockout_until[identifier]
-    
-    def get_remaining_lockout(self, identifier: str) -> int:
-        if identifier in self._lockout_until:
-            remaining = self._lockout_until[identifier] - time.time()
-            return max(0, int(remaining))
-        return 0
+_LOGIN_MAX_ATTEMPTS = 5
+_LOGIN_LOCKOUT_SECONDS = 300
+
+
+def _login_key(identifier: str) -> str:
+    return f"login:attempts:{identifier}"
+
+
+def _lockout_key(identifier: str) -> str:
+    return f"login:lockout:{identifier}"
+
+
+def is_login_locked(identifier: str) -> bool:
+    from src.rate_limit import get_redis
+    return get_redis().exists(_lockout_key(identifier)) == 1
+
+
+def record_login_attempt(identifier: str) -> None:
+    from src.rate_limit import get_redis
+    r = get_redis()
+    key = _login_key(identifier)
+    pipe = r.pipeline()
+    pipe.incr(key)
+    pipe.expire(key, _LOGIN_LOCKOUT_SECONDS)
+    count, _ = pipe.execute()
+    if int(count) >= _LOGIN_MAX_ATTEMPTS:
+        r.setex(_lockout_key(identifier), _LOGIN_LOCKOUT_SECONDS, 1)
+
+
+def clear_login_attempts(identifier: str) -> None:
+    from src.rate_limit import get_redis
+    r = get_redis()
+    r.delete(_login_key(identifier), _lockout_key(identifier))
+
+
+def get_remaining_lockout(identifier: str) -> int:
+    from src.rate_limit import get_redis
+    ttl = get_redis().ttl(_lockout_key(identifier))
+    return max(0, int(ttl)) if ttl and ttl > 0 else 0
 
 
 def generate_jwt(user_id: int, expires_at: datetime, secret_key: str) -> str:
@@ -136,6 +129,7 @@ def generate_jwt(user_id: int, expires_at: datetime, secret_key: str) -> str:
         'user_id': user_id,
         'exp': expires_at,
         'iat': datetime.now(timezone.utc),
+        'jti': secrets.token_urlsafe(16),
     }
     return jwt.encode(payload, secret_key, algorithm='HS256')
 

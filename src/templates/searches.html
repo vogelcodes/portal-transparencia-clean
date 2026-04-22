@@ -123,6 +123,7 @@
                 onsubmit="return confirm('Excluir busca?');"
                 class="inline"
               >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input type="hidden" name="_method" value="DELETE" />
                 <button
                   type="submit"

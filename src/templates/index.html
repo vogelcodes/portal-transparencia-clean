@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>Busca de Empenhos</title>
     <!-- Google Fonts - Raleway (fallback for Rawline) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -80,6 +81,7 @@
       <!-- Form Card (using design-system card-elevated pattern) -->
       <div class="card-elevated p-8">
         <form action="/searches" method="POST" class="space-y-6">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <!-- CNPJ Field -->
           <div>
             <label

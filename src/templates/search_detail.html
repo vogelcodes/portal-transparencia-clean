@@ -127,6 +127,7 @@
     <!-- Action Buttons -->
     <div class="mb-4 flex gap-3 items-center flex-wrap">
       <form method="POST" action="/searches/{{ search.id }}/refresh">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" class="btn btn-secondary">
           Re-buscar na API
         </button>
@@ -166,6 +167,7 @@
           class="hidden absolute right-0 mt-1 w-52 bg-surface rounded-md shadow-elevated border border-surface-container py-1 z-50"
         >
           <form method="POST" action="/searches/{{ search.id }}/export/csv">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button
               type="submit"
               class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
@@ -174,6 +176,7 @@
             </button>
           </form>
           <form method="POST" action="/searches/{{ search.id }}/export/xlsx">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button
               type="submit"
               class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
@@ -182,6 +185,7 @@
             </button>
           </form>
           <form method="POST" action="/searches/{{ search.id }}/export/ods">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button
               type="submit"
               class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
@@ -545,7 +549,7 @@
   document.querySelectorAll('.toggle-included').forEach(cb => {
     cb.addEventListener('change', async () => {
       const rid = cb.dataset.rid;
-      try { await fetch(`/searches/${searchId}/results/${rid}`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({included: cb.checked}) }); }
+      try { await fetch(`/searches/${searchId}/results/${rid}`, { method: 'PATCH', headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content}, body: JSON.stringify({included: cb.checked}) }); }
       catch (e) { cb.checked = !cb.checked; }
     });
   });

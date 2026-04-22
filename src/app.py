@@ -3,6 +3,7 @@ Portal da Transparência - SaaS
 """
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort
 from flask_login import LoginManager, current_user
+from flask_wtf.csrf import CSRFProtect
 import io
 import base64
 import os
@@ -16,11 +17,21 @@ from src.auth.decorators import require_auth
 # Configure static folder for design system CSS
 static_folder_path = os.path.join(os.path.dirname(__file__), 'static')
 app = Flask(__name__, static_folder=static_folder_path, static_url_path='/static')
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
+
+_secret_key = os.getenv('SECRET_KEY')
+if not _secret_key or _secret_key == 'dev':
+    raise RuntimeError("SECRET_KEY env var is required and must not be 'dev'")
+app.config['SECRET_KEY'] = _secret_key
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', '')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('APP_ENV') == 'production'
+app.config['WTF_CSRF_TIME_LIMIT'] = None
 
 db.init_app(app)
+csrf = CSRFProtect(app)
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
@@ -32,6 +43,13 @@ def load_user(user_id):
 
 
 app.register_blueprint(auth_bp)
+
+# Login/register submit as JSON via fetch() without a prior session, so CSRF
+# tokens cannot be bound. Brute-force protection (Redis) covers login abuse;
+# register rate-limit is handled by upstream proxy in production.
+from src.auth.routes import login as _login_view, register as _register_view  # noqa: E402
+csrf.exempt(_login_view)
+csrf.exempt(_register_view)
 
 
 @app.cli.command('init-db')
@@ -49,6 +67,7 @@ def health():
 
 
 @app.route('/info')
+@require_auth
 def info():
     return jsonify({
         'env': os.getenv('APP_ENV'),
