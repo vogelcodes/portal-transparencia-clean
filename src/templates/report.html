@@ -1,219 +1,246 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Relatório de Notas de Empenho</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: "#FFFFFF",
+              "surface-dim": "#FAFAFA",
+              "surface-container": "#F8F8F8",
+              "surface-container-high": "#F0F0F0",
+              "surface-container-highest": "#E8E8E8",
+              "on-surface": "#1a1a1a",
+              "on-surface-variant": "#333333",
+              primary: "#1351B4",
+              "on-primary": "#FFFFFF",
+              "primary-container": "#E8F0FE",
+              "on-primary-container": "#0D47A1",
+              secondary: "#455A64",
+              error: "#B00020",
+              background: "#FFFFFF",
+            },
+            fontFamily: {
+              rawline: ["Raleway", "sans-serif"],
+            },
+            borderRadius: {
+              sm: "2px",
+              DEFAULT: "3px",
+              md: "4px",
+              lg: "6px",
+              xl: "12px",
+            },
+            boxShadow: {
+              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        h1, h2, h3 {
-            color: #2c3e50;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .header {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            border: 1px solid #ddd;
-        }
-
-        .summary-box {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            flex: 1;
-            background: #fff;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-        }
-
-        .card h4 {
-            margin-top: 0;
-            color: #7f8c8d;
-            font-size: 0.9em;
-            text-transform: uppercase;
-        }
-
-        .card .value {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .empenho-container {
-            margin-bottom: 30px;
-            border: 1px solid #e1e8ed;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .empenho-header {
-            background-color: #f1f5f8;
-            padding: 10px 15px;
-            border-bottom: 1px solid #e1e8ed;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .empenho-title {
-            font-weight: bold;
-            color: #2980b9;
-        }
-
-        .empenho-date {
-            color: #7f8c8d;
-            font-size: 0.9em;
-        }
-
-        .empenho-body {
-            padding: 15px;
-        }
-
-        .empenho-row {
-            display: flex;
-            margin-bottom: 8px;
-        }
-
-        .empenho-label {
-            font-weight: 600;
-            width: 140px;
-            color: #555;
-        }
-
-        .empenho-data {
-            flex: 1;
-        }
-
-        .item-box {
-            background: #fff9db;
-            padding: 10px;
-            margin-top: 10px;
-            border-left: 4px solid #f1c40f;
-            font-size: 0.9em;
-        }
-
+      @media print {
         .print-btn {
-            display: block;
-            margin: 20px 0;
-            padding: 10px 20px;
-            background: #3498db;
-            color: white;
-            text-align: center;
-            text-decoration: none;
-            border-radius: 5px;
-            width: fit-content;
+          display: none;
         }
-
-        .badge {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            background: #27ae60;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            margin-left: 10px;
+        body {
+          padding: 0;
+          max-width: none;
         }
-
-        @media print {
-            .print-btn { display: none; }
-            body { padding: 0; max-width: none; }
-            .empenho-container { page-break-inside: avoid; border: 1px solid #ccc; }
+        .empenho-container {
+          page-break-inside: avoid;
+          border: 1px solid #ccc;
         }
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <a href="#" onclick="window.print();return false;" class="print-btn">Imprimir / Salvar como PDF</a>
+  <body class="bg-background text-on-surface font-rawline p-6">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-    <h1>Relatório de Notas de Empenho</h1>
+    <div class="max-w-5xl mx-auto">
+      <!-- Print Button -->
+      <a
+        href="#"
+        onclick="
+          window.print();
+          return false;
+        "
+        class="print-btn inline-block mb-6 px-6 py-3 bg-primary text-on-primary rounded-md shadow-card hover:bg-on-primary-container transition-colors text-label-sm font-semibold uppercase tracking-wide"
+      >
+        Imprimir / Salvar como PDF
+      </a>
 
-    <div class="header">
-        <h2>Relatório Selecionado</h2>
-        <p>Este relatório lista as Notas de Empenho selecionadas.</p>
-    </div>
+      <!-- Header -->
+      <div class="bg-surface-dim rounded-lg shadow-card p-6 mb-6">
+        <h1
+          class="text-headline-lg text-on-surface font-semibold border-b border-surface-container pb-4"
+        >
+          Relatório de Notas de Empenho
+        </h1>
+        <p class="text-body-md text-on-surface-variant mt-4">
+          Este relatório lista as Notas de Empenho selecionadas.
+        </p>
+      </div>
 
-    <div class="summary-box">
-        <div class="card">
-            <h4>Total Empenhado</h4>
-            <div class="value">{{ total_value }}</div>
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div class="bg-surface rounded-lg shadow-card p-6">
+          <h4
+            class="text-label-sm text-on-surface-variant font-semibold uppercase tracking-wide"
+          >
+            Total Empenhado
+          </h4>
+          <div class="text-headline-md text-on-surface font-bold mt-2">
+            {{ total_value }}
+          </div>
         </div>
-        <div class="card">
-            <h4>Total de Documentos</h4>
-            <div class="value">{{ count }}</div>
+        <div class="bg-surface rounded-lg shadow-card p-6">
+          <h4
+            class="text-label-sm text-on-surface-variant font-semibold uppercase tracking-wide"
+          >
+            Total de Documentos
+          </h4>
+          <div class="text-headline-md text-on-surface font-bold mt-2">
+            {{ count }}
+          </div>
         </div>
-        <div class="card">
-            <h4>Filtro Aplicado</h4>
-            <div class="value">{{ pregao_filter if pregao_filter else 'Nenhum' }}</div>
+        <div class="bg-surface rounded-lg shadow-card p-6">
+          <h4
+            class="text-label-sm text-on-surface-variant font-semibold uppercase tracking-wide"
+          >
+            Filtro Aplicado
+          </h4>
+          <div class="text-headline-md text-on-surface font-bold mt-2">
+            {{ pregao_filter if pregao_filter else 'Nenhum' }}
+          </div>
         </div>
-    </div>
+      </div>
 
-    <h3>Detalhamento dos Empenhos</h3>
+      <!-- Section Title -->
+      <h2 class="text-headline-md text-on-surface font-semibold mb-4">
+        Detalhamento dos Empenhos
+      </h2>
 
-    {% for emp in empenhos %}
-    <div class="empenho-container">
-        <div class="empenho-header">
-            <span class="empenho-title">
-                <a href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ emp.documento }}" target="_blank" style="text-decoration:none; color:#2980b9;">
-                    {{ emp.documentoResumido or emp.documento }} 🔗
-                </a>
-                {% if "90021" in (emp.observacao or '') or "90021" in str(emp) %}
-                <span class="badge">Pregão 90021/2024</span>
-                {% endif %}
-                {% if pregao_filter and pregao_filter != "90021" and (pregao_filter in (emp.observacao or '') or pregao_filter in str(emp)) %}
-                <span class="badge">Filtro: {{ pregao_filter }}</span>
-                {% endif %}
+      <!-- Empenho List -->
+      {% for emp in empenhos %}
+      <div
+        class="empenho-container bg-surface rounded-lg shadow-card overflow-hidden mb-6"
+      >
+        <!-- Header -->
+        <div
+          class="bg-surface-container-high px-5 py-3 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2"
+        >
+          <div class="flex items-center gap-3 flex-wrap">
+            <a
+              href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ emp.documento }}"
+              target="_blank"
+              class="text-primary hover:text-on-primary-container font-medium text-body-md"
+            >
+              {{ emp.documentoResumido or emp.documento }} 🔗
+            </a>
+            {% if "90021" in (emp.observacao or '') or "90021" in str(emp) %}
+            <span
+              class="bg-primary-container text-on-primary-container text-label-sm px-2 py-1 rounded-sm font-medium"
+            >
+              Pregão 90021/2024
             </span>
-            <span class="empenho-date">{{ format_date(emp.data) }}</span>
-        </div>
-        <div class="empenho-body">
-            <div class="empenho-row">
-                <span class="empenho-label">Unidade Gestora:</span>
-                <span class="empenho-data">{{ emp.codigoUg }} - {{ emp.ug }}</span>
-            </div>
-            <div class="empenho-row">
-                <span class="empenho-label">Valor:</span>
-                <span class="empenho-data" style="font-weight:bold; color:#2c3e50;">{{ format_currency(emp.valor) }}</span>
-            </div>
-            <div class="empenho-row">
-                <span class="empenho-label">Processo:</span>
-                <span class="empenho-data">{{ emp.numeroProcesso }}</span>
-            </div>
-            <div class="empenho-row">
-                <span class="empenho-label">Descrição:</span>
-                <span class="empenho-data">{{ emp.observacao }}</span>
-            </div>
-            <div class="empenho-row">
-                <span class="empenho-label">Natureza:</span>
-                <span class="empenho-data">{{ emp.categoria }} > {{ emp.grupo }} > {{ emp.elemento }}</span>
-            </div>
-            {% if not emp.items %}
-            <div class="item-box">Detalhes dos itens não disponíveis via API pública.</div>
+            {% endif %} {% if pregao_filter and pregao_filter != "90021" and
+            (pregao_filter in (emp.observacao or '') or pregao_filter in
+            str(emp)) %}
+            <span
+              class="bg-primary-container text-on-primary-container text-label-sm px-2 py-1 rounded-sm font-medium"
+            >
+              Filtro: {{ pregao_filter }}
+            </span>
             {% endif %}
+          </div>
+          <span class="text-label-sm text-on-surface-variant"
+            >{{ format_date(emp.data) }}</span
+          >
         </div>
-    </div>
-    {% endfor %}
 
-    <div style="margin-top: 50px; font-size: 0.8em; color: #777; border-top: 1px solid #ddd; padding-top: 10px;">
-        <p>Gerado automaticamente via Empenho Report App em {{ now }}.</p>
-    </div>
-</body>
+        <!-- Body -->
+        <div class="p-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+            <div class="flex">
+              <span
+                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
+                >Unidade Gestora:</span
+              >
+              <span class="text-body-md text-on-surface-variant"
+                >{{ emp.codigoUg }} - {{ emp.ug }}</span
+              >
+            </div>
+            <div class="flex">
+              <span
+                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
+                >Valor:</span
+              >
+              <span class="text-body-md text-on-surface font-bold"
+                >{{ format_currency(emp.valor) }}</span
+              >
+            </div>
+            <div class="flex">
+              <span
+                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
+                >Processo:</span
+              >
+              <span class="text-body-md text-on-surface-variant"
+                >{{ emp.numeroProcesso }}</span
+              >
+            </div>
+            <div class="flex">
+              <span
+                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
+                >Descrição:</span
+              >
+              <span class="text-body-md text-on-surface-variant"
+                >{{ emp.observacao }}</span
+              >
+            </div>
+            <div class="md:col-span-2 flex">
+              <span
+                class="text-label-sm text-on-surface font-semibold uppercase tracking-wide w-36 flex-shrink-0"
+                >Natureza:</span
+              >
+              <span class="text-body-md text-on-surface-variant"
+                >{{ emp.categoria }} > {{ emp.grupo }} > {{ emp.elemento
+                }}</span
+              >
+            </div>
+          </div>
 
+          {% if not emp.items %}
+          <div
+            class="mt-4 bg-primary-container/30 border-l-4 border-primary-container px-4 py-3 rounded-sm"
+          >
+            <p class="text-body-md text-on-surface-variant">
+              Detalhes dos itens não disponíveis via API pública.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Footer -->
+      <div class="mt-8 pt-4 border-t border-surface-container text-center">
+        <p class="text-label-sm text-on-surface-variant">
+          Gerado automaticamente via Portal Transparência Utils em {{ now }}.
+        </p>
+      </div>
+    </div>
+  </body>
 </html>
