@@ -259,7 +259,7 @@
                 <a
                   href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ r.documento }}"
                   target="_blank"
-                  class="hover:text-on-primary-container"
+                  class="text-on-primary-container"
                 >
                   {{ r.documento_resumido or r.documento }}
                 </a>
@@ -455,34 +455,19 @@
     return html;
   }
 
-  function toggleDetails(btn) {
-    const row = btn.closest('tr');
-    const panel = row.nextElementSibling;
-    if (!panel || !panel.classList.contains('enrichment-panel')) return;
-
-    const isHidden = panel.style.display === 'none' || panel.classList.contains('hidden');
-
-    if (isHidden) {
-      panel.style.display = '';
-      panel.classList.remove('hidden');
-      btn.textContent = '−';
-    } else {
-      panel.style.display = 'none';
-      panel.classList.add('hidden');
-      btn.textContent = '+';
-    }
-  }
-
   function attachExpandBtn(rid) {
     const spinner = document.getElementById('spinner-' + rid);
     if (!spinner) return;
+
+    // Only create button if one doesn't already exist
+    const existingBtn = spinner.parentElement.querySelector('.expand-btn[data-rid="' + rid + '"]');
+    if (existingBtn) return;
 
     const btn = document.createElement('button');
     btn.className = 'expand-btn w-8 h-8 rounded-md text-on-surface-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary';
     btn.dataset.rid = rid;
     btn.textContent = '+';
     btn.type = 'button';
-    btn.addEventListener('click', function() { toggleDetails(this); });
     spinner.replaceWith(btn);
   }
 
@@ -496,17 +481,15 @@
     const row = panel.previousElementSibling;
     const observacao = row ? row.dataset.obs || '' : '';
 
-    // Build and insert the panel content
-    const content = buildPanelHTML(enr, observacao);
+    // Build and insert the panel content only if empty
     const td = panel.querySelector('td');
-    if (td) {
+    if (td && !td.hasChildNodes()) {
+      const content = buildPanelHTML(enr, observacao);
       td.innerHTML = content;
     }
 
-    // Attach expand button
+    // Attach expand button (will not duplicate if already exists)
     attachExpandBtn(rid);
-
-    console.log('Panel activated for rid:', rid, 'content length:', content.length);
   }
 
   // Initialize panels on page load for results that already have enrichment_json
@@ -532,12 +515,29 @@
   // Run initialization on DOM ready
   document.addEventListener('DOMContentLoaded', initPreEnrichedPanels);
 
-  // Attach click handlers to all expand buttons (including dynamically added ones)
+  // Single delegated handler for expand buttons - handles both static and dynamically created buttons
   document.addEventListener('click', function(e) {
     const btn = e.target.closest('.expand-btn');
-    if (btn) {
-      e.preventDefault();
-      toggleDetails(btn);
+    if (!btn) return;
+
+    e.preventDefault();
+    const rid = btn.dataset.rid;
+    if (!rid) return;
+
+    const row = btn.closest('tr');
+    const panel = row ? row.nextElementSibling : null;
+    if (!panel || !panel.classList.contains('enrichment-panel')) return;
+
+    const isHidden = panel.style.display === 'none' || panel.classList.contains('hidden');
+
+    if (isHidden) {
+      panel.style.display = '';
+      panel.classList.remove('hidden');
+      btn.textContent = '−';
+    } else {
+      panel.style.display = 'none';
+      panel.classList.add('hidden');
+      btn.textContent = '+';
     }
   });
 
