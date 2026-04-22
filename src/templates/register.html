@@ -1,165 +1,261 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cadastro - Portal Transparência Utils</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-    </style>
-</head>
-<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
-        <div class="p-8">
-            <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-800">Criar Conta</h1>
-                <p class="text-gray-500 mt-2">Cadastre-se para acessar o sistema</p>
-            </div>
-            
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="mb-4">
-                        {% for category, message in messages %}
-                            <div class="p-4 rounded-lg mb-2 
-                                {% if category == 'error' %}bg-red-100 text-red-700 border border-red-200
-                                {% elif category == 'success' %}bg-green-100 text-green-700 border border-green-200
-                                {% else %}bg-blue-100 text-blue-700 border border-blue-200{% endif %}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            
-            <form id="registerForm" method="POST" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Usuário</label>
-                    <input type="text" name="username" id="username" required minlength="3"
-                        value="{{ username|default('') }}"
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                        placeholder="Seu usuário (mín. 3 caracteres)">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input type="email" name="email" id="email" required
-                        value="{{ email|default('') }}"
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                        placeholder="seu@email.com">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                    <input type="password" name="password" id="password" required minlength="8"
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                        placeholder="••••••••">
-                    <div class="mt-2 h-1 rounded-full bg-gray-200">
-                        <div id="strengthBar" class="h-full rounded-full transition-all" style="width: 0%"></div>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">
-                        Mín. 8 caracteres com maiúsculas, minúsculas, números e especiais (!@#$%)
-                    </p>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Senha</label>
-                    <input type="password" name="confirm_password" id="confirm_password" required
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                        placeholder="••••••••">
-                </div>
-                
-                <button type="submit" id="submitBtn"
-                    class="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition shadow-lg">
-                    Criar Conta
-                </button>
-            </form>
-            
-            <div class="mt-6 text-center">
-                <p class="text-gray-600">
-                    Já tem conta? 
-                    <a href="{{ url_for('auth.login') }}" class="text-purple-600 hover:text-purple-800 font-semibold">
-                        Fazer login
-                    </a>
-                </p>
-            </div>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: "#FFFFFF",
+              "surface-dim": "#FAFAFA",
+              "surface-container": "#F8F8F8",
+              "on-surface": "#1a1a1a",
+              "on-surface-variant": "#333333",
+              primary: "#1351B4",
+              "on-primary": "#FFFFFF",
+              "primary-container": "#E8F0FE",
+              "on-primary-container": "#0D47A1",
+              error: "#B00020",
+              "error-container": "#FDECEA",
+              "on-error-container": "#B00020",
+              background: "#FFFFFF",
+            },
+            fontFamily: {
+              rawline: ["Raleway", "sans-serif"],
+            },
+            borderRadius: {
+              sm: "2px",
+              DEFAULT: "3px",
+              md: "4px",
+              lg: "6px",
+              xl: "12px",
+            },
+            boxShadow: {
+              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="bg-primary min-h-screen flex items-center justify-center p-4 font-rawline"
+  >
+    <div
+      class="bg-surface rounded-xl shadow-elevated w-full max-w-md overflow-hidden"
+    >
+      <div class="p-8">
+        <div class="text-center mb-8">
+          <h1 class="text-headline-lg text-on-surface font-semibold">
+            Criar Conta
+          </h1>
+          <p class="text-body-md text-on-surface-variant mt-2">
+            Cadastre-se para acessar o sistema
+          </p>
         </div>
-        
-        <div class="bg-gray-50 px-8 py-4 border-t border-gray-200">
-            <a href="{{ url_for('index') }}" class="text-gray-500 hover:text-gray-700 text-sm">
-                ← Voltar para busca
+
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %}
+        <div class="mb-4">
+          {% for category, message in messages %}
+          <div
+            class="p-4 rounded-md mb-2 {% if category == 'error' %}bg-error-container text-on-error-container border border-error {% elif category == 'success' %}bg-green-100 text-green-700 border border-green-200 {% else %}bg-primary-container text-on-primary-container border border-primary{% endif %}"
+          >
+            {{ message }}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %} {% endwith %}
+
+        <form id="registerForm" method="POST" class="space-y-5">
+          <div>
+            <label
+              class="block text-label-sm text-on-surface font-semibold uppercase tracking-wide mb-2"
+              >Usuário</label
+            >
+            <input
+              type="text"
+              name="username"
+              id="username"
+              required
+              minlength="3"
+              value="{{ username|default('') }}"
+              class="w-full px-4 py-3 rounded-md border border-on-surface-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+              placeholder="Seu usuário (mín. 3 caracteres)"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-label-sm text-on-surface font-semibold uppercase tracking-wide mb-2"
+              >Email</label
+            >
+            <input
+              type="email"
+              name="email"
+              id="email"
+              required
+              value="{{ email|default('') }}"
+              class="w-full px-4 py-3 rounded-md border border-on-surface-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+              placeholder="seu@email.com"
+            />
+          </div>
+
+          <div>
+            <label
+              class="block text-label-sm text-on-surface font-semibold uppercase tracking-wide mb-2"
+              >Senha</label
+            >
+            <input
+              type="password"
+              name="password"
+              id="password"
+              required
+              minlength="8"
+              class="w-full px-4 py-3 rounded-md border border-on-surface-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+              placeholder="••••••••"
+            />
+            <div class="mt-2 h-1 rounded-full bg-surface-container">
+              <div
+                id="strengthBar"
+                class="h-full rounded-full transition-all"
+                style="width: 0%"
+              ></div>
+            </div>
+            <p class="text-label-sm text-on-surface-variant mt-1">
+              Mín. 8 caracteres com maiúsculas, minúsculas, números e especiais
+              (!@#$%)
+            </p>
+          </div>
+
+          <div>
+            <label
+              class="block text-label-sm text-on-surface font-semibold uppercase tracking-wide mb-2"
+              >Confirmar Senha</label
+            >
+            <input
+              type="password"
+              name="confirm_password"
+              id="confirm_password"
+              required
+              class="w-full px-4 py-3 rounded-md border border-on-surface-variant bg-surface-container text-on-surface text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <button
+            type="submit"
+            id="submitBtn"
+            class="w-full bg-primary text-on-primary py-3 rounded-md text-label-sm font-semibold uppercase tracking-wide hover:bg-on-primary-container transition shadow-card"
+          >
+            Criar Conta
+          </button>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-body-md text-on-surface-variant">
+            Já tem conta?
+            <a
+              href="{{ url_for('auth.login') }}"
+              class="text-primary hover:text-on-primary-container font-semibold"
+            >
+              Fazer login
             </a>
+          </p>
         </div>
+      </div>
+
+      <div class="bg-surface-dim px-8 py-4 border-t border-surface-container">
+        <a
+          href="{{ url_for('index') }}"
+          class="text-label-sm text-on-surface-variant hover:text-on-surface"
+        >
+          ← Voltar para busca
+        </a>
+      </div>
     </div>
 
     <script>
-        document.getElementById('password').addEventListener('input', function(e) {
-            const password = e.target.value;
-            const bar = document.getElementById('strengthBar');
-            let strength = 0;
-            
-            if (password.length >= 8) strength += 25;
-            if (/[A-Z]/.test(password)) strength += 25;
-            if (/[a-z]/.test(password)) strength += 25;
-            if (/[0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password)) strength += 25;
-            
-            bar.style.width = strength + '%';
-            
-            if (strength <= 25) bar.className = 'h-full rounded-full bg-red-500 transition-all';
-            else if (strength <= 50) bar.className = 'h-full rounded-full bg-orange-500 transition-all';
-            else if (strength <= 75) bar.className = 'h-full rounded-full bg-yellow-500 transition-all';
-            else bar.className = 'h-full rounded-full bg-green-500 transition-all';
+      document
+        .getElementById("password")
+        .addEventListener("input", function (e) {
+          const password = e.target.value;
+          const bar = document.getElementById("strengthBar");
+          let strength = 0;
+
+          if (password.length >= 8) strength += 25;
+          if (/[A-Z]/.test(password)) strength += 25;
+          if (/[a-z]/.test(password)) strength += 25;
+          if (/[0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password))
+            strength += 25;
+
+          bar.style.width = strength + "%";
+
+          if (strength <= 25)
+            bar.className = "h-full rounded-full bg-red-500 transition-all";
+          else if (strength <= 50)
+            bar.className = "h-full rounded-full bg-orange-500 transition-all";
+          else if (strength <= 75)
+            bar.className = "h-full rounded-full bg-yellow-500 transition-all";
+          else
+            bar.className = "h-full rounded-full bg-green-500 transition-all";
         });
-        
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const btn = document.getElementById('submitBtn');
-            const form = this;
-            const formData = new FormData(form);
-            
-            if (formData.get('password') !== formData.get('confirm_password')) {
-                alert('As senhas não coincidem!');
-                return;
+
+      document
+        .getElementById("registerForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const btn = document.getElementById("submitBtn");
+          const form = this;
+          const formData = new FormData(form);
+
+          if (formData.get("password") !== formData.get("confirm_password")) {
+            alert("As senhas não coincidem!");
+            return;
+          }
+
+          btn.disabled = true;
+          btn.textContent = "Criando conta...";
+
+          try {
+            const response = await fetch('{{ url_for("auth.register") }}', {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                username: formData.get("username"),
+                email: formData.get("email"),
+                password: formData.get("password"),
+                confirm_password: formData.get("confirm_password"),
+              }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+              alert("Conta criada com sucesso! Faça login para continuar.");
+              window.location.href =
+                data.redirect || '{{ url_for("auth.login") }}';
+            } else {
+              const errors = data.errors || [data.error];
+              alert(errors.join("\n"));
+              btn.disabled = false;
+              btn.textContent = "Criar Conta";
             }
-            
-            btn.disabled = true;
-            btn.textContent = 'Criando conta...';
-            
-            try {
-                const response = await fetch('{{ url_for("auth.register") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        username: formData.get('username'),
-                        email: formData.get('email'),
-                        password: formData.get('password'),
-                        confirm_password: formData.get('confirm_password')
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    alert('Conta criada com sucesso! Faça login para continuar.');
-                    window.location.href = data.redirect || '{{ url_for("auth.login") }}';
-                } else {
-                    const errors = data.errors || [data.error];
-                    alert(errors.join('\n'));
-                    btn.disabled = false;
-                    btn.textContent = 'Criar Conta';
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                alert('Erro ao criar conta. Tente novamente.');
-                btn.disabled = false;
-                btn.textContent = 'Criar Conta';
-            }
+          } catch (error) {
+            console.error("Registration error:", error);
+            alert("Erro ao criar conta. Tente novamente.");
+            btn.disabled = false;
+            btn.textContent = "Criar Conta";
+          }
         });
     </script>
-</body>
+  </body>
 </html>

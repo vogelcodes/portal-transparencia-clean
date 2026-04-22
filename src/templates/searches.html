@@ -1,57 +1,138 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Minhas Buscas</title>
     <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Minhas Buscas</h1>
-            <a href="/" class="inline-flex py-2 px-4 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">Nova Busca</a>
-        </div>
-        {% if not searches %}
-        <p class="text-gray-500">Nenhuma busca ainda.</p>
-        {% else %}
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">CNPJ</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pregão</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Criada</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                {% for s in searches %}
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm font-medium text-blue-600"><a href="/searches/{{ s.id }}" class="hover:underline">{{ s.name or ('#' ~ s.id) }}</a></td>
-                    <td class="px-4 py-3 text-sm text-gray-700">{{ s.cnpj }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-700">{{ s.pregao_filter or '—' }}</td>
-                    <td class="px-4 py-3 text-sm">
-                        <span class="px-2 py-1 rounded text-xs
-                            {% if s.status == 'done' %}bg-green-100 text-green-800
-                            {% elif s.status == 'error' %}bg-red-100 text-red-800
-                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                            {{ s.status }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-sm text-gray-500">{{ s.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                    <td class="px-4 py-3 text-right">
-                        <form method="POST" action="/searches/{{ s.id }}" onsubmit="return confirm('Excluir busca?')" class="inline">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button class="text-xs text-red-600 hover:underline">Excluir</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: "#FFFFFF",
+              "surface-dim": "#FAFAFA",
+              "surface-container": "#F8F8F8",
+              "on-surface": "#1a1a1a",
+              "on-surface-variant": "#333333",
+              primary: "#1351B4",
+              "on-primary": "#FFFFFF",
+              "primary-container": "#E8F0FE",
+              "on-primary-container": "#0D47A1",
+              error: "#B00020",
+              background: "#FFFFFF",
+            },
+            fontFamily: {
+              rawline: ["Raleway", "sans-serif"],
+            },
+            borderRadius: {
+              sm: "2px",
+              DEFAULT: "3px",
+              md: "4px",
+              lg: "6px",
+              xl: "12px",
+            },
+            boxShadow: {
+              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-background min-h-screen p-6 font-rawline">
+    <div class="max-w-5xl mx-auto bg-surface rounded-lg shadow-elevated p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="text-headline-lg text-on-surface font-semibold">
+          Minhas Buscas
+        </h1>
+        <a
+          href="/"
+          class="inline-flex py-3 px-6 rounded-md text-label-sm font-semibold uppercase tracking-wide text-on-primary bg-primary hover:bg-on-primary-container shadow-card"
+        >
+          Nova Busca
+        </a>
+      </div>
+
+      {% if not searches %}
+      <p class="text-body-md text-on-surface-variant">Nenhuma busca ainda.</p>
+      {% else %}
+      <table class="min-w-full divide-y divide-surface-container">
+        <thead class="bg-surface-dim">
+          <tr>
+            <th
+              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+            >
+              Nome
+            </th>
+            <th
+              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+            >
+              CNPJ
+            </th>
+            <th
+              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+            >
+              Pregão
+            </th>
+            <th
+              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+            >
+              Status
+            </th>
+            <th
+              class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
+            >
+              Criada
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody class="bg-surface divide-y divide-surface-container">
+          {% for s in searches %}
+          <tr class="hover:bg-surface-dim">
+            <td class="px-4 py-4 text-body-md font-medium text-primary">
+              <a
+                href="/searches/{{ s.id }}"
+                class="hover:text-on-primary-container"
+                >{{ s.name or ('#' ~ s.id) }}</a
+              >
+            </td>
+            <td class="px-4 py-4 text-body-md text-on-surface">{{ s.cnpj }}</td>
+            <td class="px-4 py-4 text-body-md text-on-surface">
+              {{ s.pregao_filter or '—' }}
+            </td>
+            <td class="px-4 py-4">
+              <span
+                class="px-3 py-1 rounded-sm text-label-sm font-medium {% if s.status == 'done' %}bg-green-100 text-green-800 {% elif s.status == 'error' %}bg-error-container text-on-error-container {% else %}bg-amber-100 text-amber-800{% endif %}"
+              >
+                {{ s.status }}
+              </span>
+            </td>
+            <td class="px-4 py-4 text-body-md text-on-surface-variant">
+              {{ s.created_at.strftime('%d/%m/%Y %H:%M') }}
+            </td>
+            <td class="px-4 py-4 text-right">
+              <form
+                method="POST"
+                action="/searches/{{ s.id }}"
+                onsubmit="return confirm('Excluir busca?');"
+                class="inline"
+              >
+                <input type="hidden" name="_method" value="DELETE" />
+                <button
+                  class="text-label-sm text-error hover:text-on-error-container"
+                >
+                  Excluir
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
     </div>
-</body>
+  </body>
 </html>

@@ -5,7 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Busca #{{ search.id }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: "#FFFFFF",
+              "surface-dim": "#FAFAFA",
+              "surface-container": "#F8F8F8",
+              "surface-container-high": "#F0F0F0",
+              "surface-container-highest": "#E8E8E8",
+              "on-surface": "#1a1a1a",
+              "on-surface-variant": "#333333",
+              primary: "#1351B4",
+              "on-primary": "#FFFFFF",
+              "primary-container": "#E8F0FE",
+              "on-primary-container": "#0D47A1",
+              secondary: "#455A64",
+              error: "#B00020",
+              background: "#FFFFFF",
+            },
+            fontFamily: {
+              rawline: ["Raleway", "sans-serif"],
+            },
+            borderRadius: {
+              sm: "2px",
+              DEFAULT: "3px",
+              md: "4px",
+              lg: "6px",
+              xl: "12px",
+            },
+            boxShadow: {
+              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
     <style>
+      @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap");
       .line-clamp-3 {
         display: -webkit-box;
         -webkit-line-clamp: 3;
@@ -14,76 +53,97 @@
       }
     </style>
   </head>
-  <body class="bg-gray-100 min-h-screen p-8">
-    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-6">
-      <div class="flex justify-between items-center mb-4">
+  <body class="bg-background min-h-screen p-6 font-rawline">
+    <div class="max-w-6xl mx-auto bg-surface rounded-lg shadow-elevated p-6">
+      <!-- Header -->
+      <div
+        class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4"
+      >
         <div>
-          <h1 class="text-2xl font-bold text-gray-800">
+          <h1 class="text-headline-md text-on-surface font-semibold">
             {{ search.name or ('Busca #' ~ search.id) }}
           </h1>
-          <p class="text-sm text-gray-500">
+          <p class="text-body-md text-on-surface-variant mt-1">
             CNPJ: {{ search.cnpj }} | Filtro:
-            <strong>{{ search.pregao_filter or 'Todos' }}</strong>
+            <strong class="text-primary"
+              >{{ search.pregao_filter or 'Todos' }}</strong
+            >
           </p>
         </div>
-        <div class="flex gap-3 items-center">
+        <div class="flex gap-3 items-center flex-wrap">
           <span
             id="status-badge"
-            class="px-3 py-1 rounded text-xs bg-yellow-100 text-yellow-800"
-            >{{ search.status }}</span
+            class="px-3 py-1 rounded-sm text-label-sm bg-amber-100 text-amber-800"
           >
-          <a href="/searches" class="text-sm text-blue-600 hover:underline"
-            >Minhas buscas</a
+            {{ search.status }}
+          </span>
+          <a
+            href="/searches"
+            class="text-label-sm text-primary hover:text-on-primary-container"
           >
-          <a href="/" class="text-sm text-blue-600 hover:underline"
-            >Nova busca</a
+            Minhas buscas
+          </a>
+          <a
+            href="/"
+            class="text-label-sm text-primary hover:text-on-primary-container"
           >
+            Nova busca
+          </a>
         </div>
       </div>
 
       {% if search.error %}
       <div
-        class="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700"
+        class="mb-4 p-3 bg-error-container border border-error rounded-md text-body-md text-on-error-container"
       >
         {{ search.error }}
       </div>
       {% endif %} {% set total_results = results | length %} {% set
       enriched_count = results | selectattr('enrichment_json') | list | length
       %}
-      <p class="mb-4 text-lg font-semibold text-gray-700">
+
+      <p class="mb-4 text-body-lg font-medium text-on-surface">
         Total de empenhos encontrados:
-        <span class="text-blue-600">{{ total_results }}</span>
+        <span class="text-headline-md font-bold text-primary"
+          >{{ total_results }}</span
+        >
       </p>
+
+      <!-- Enrichment Banner -->
       <div
         id="enrich-banner"
-        class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded flex items-center gap-3 {% if total_results == 0 or enriched_count >= total_results %}hidden{% endif %}"
+        class="mb-4 p-4 bg-primary-container/20 border border-primary-container rounded-md flex items-center gap-3 {% if total_results == 0 or enriched_count >= total_results %}hidden{% endif %}"
       >
         <div
-          class="animate-spin rounded-full h-4 w-4 border-2 border-amber-300 border-t-amber-600 flex-shrink-0"
+          class="animate-spin rounded-full h-5 w-5 border-2 border-primary-container border-t-primary flex-shrink-0"
         ></div>
         <div class="flex-1">
-          <span class="text-sm text-amber-800">Enriquecendo dados:</span>
+          <span class="text-body-md text-on-primary-container"
+            >Enriquecendo dados:</span
+          >
           <span
             id="enrich-count"
-            class="text-sm font-medium text-amber-900 ml-1"
-            >{{ enriched_count }}/{{ total_results }}</span
+            class="text-body-md font-semibold text-on-primary-container ml-1"
           >
+            {{ enriched_count }}/{{ total_results }}
+          </span>
           <div
-            class="mt-1 h-1.5 bg-amber-200 rounded-full overflow-hidden w-full"
+            class="mt-2 h-2 bg-primary-container/30 rounded-full overflow-hidden w-full"
           >
             <div
               id="enrich-bar"
-              class="h-full bg-amber-500 rounded-full transition-all duration-500"
+              class="h-full bg-primary-container rounded-full transition-all duration-500"
               style="width: {% if total_results %}{{ (enriched_count / total_results * 100) | int }}{% else %}0{% endif %}%"
             ></div>
           </div>
         </div>
       </div>
 
-      <div class="mb-4 flex gap-3 items-center">
+      <!-- Action Buttons -->
+      <div class="mb-4 flex gap-3 items-center flex-wrap">
         <form method="POST" action="/searches/{{ search.id }}/refresh">
           <button
-            class="px-4 py-2 rounded-md text-sm font-medium text-white bg-gray-600 hover:bg-gray-700"
+            class="px-4 py-2 rounded-md text-label-sm font-medium text-on-secondary bg-secondary hover:bg-secondary-container"
           >
             Re-buscar na API
           </button>
@@ -91,7 +151,7 @@
         <div class="relative group">
           <button
             id="export-btn"
-            class="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1"
+            class="px-4 py-2 rounded-md text-label-sm font-medium text-on-primary bg-primary hover:bg-on-primary-container flex items-center gap-2"
           >
             <svg
               class="w-4 h-4"
@@ -123,12 +183,12 @@
           </button>
           <div
             id="export-menu"
-            class="hidden absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50"
+            class="hidden absolute right-0 mt-1 w-52 bg-surface rounded-md shadow-elevated border border-surface-container py-1 z-50"
           >
             <form method="POST" action="/searches/{{ search.id }}/export/csv">
               <button
                 type="submit"
-                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
               >
                 📄 CSV
               </button>
@@ -136,7 +196,7 @@
             <form method="POST" action="/searches/{{ search.id }}/export/xlsx">
               <button
                 type="submit"
-                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
               >
                 📊 XLSX (Excel) — colunas auto
               </button>
@@ -144,7 +204,7 @@
             <form method="POST" action="/searches/{{ search.id }}/export/ods">
               <button
                 type="submit"
-                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                class="w-full text-left px-4 py-2 text-body-md text-on-surface hover:bg-surface-container"
               >
                 📑 ODS (LibreOffice)
               </button>
@@ -153,65 +213,70 @@
         </div>
       </div>
 
+      <!-- Empty State -->
       <div
         id="empty"
-        class="{% if results %}hidden{% endif %} text-gray-500 py-8 text-center"
+        class="{% if results %}hidden{% endif %} text-on-surface-variant py-8 text-center"
       >
         {% if search.status in ('pending', 'fetching') %}
         <div
-          class="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-600 mx-auto mb-3"
+          class="animate-spin rounded-full h-12 w-12 border-4 border-surface-container border-t-primary mx-auto mb-4"
         ></div>
-        Buscando empenhos… {% else %} Nenhum resultado. {% endif %}
+        <p class="text-body-lg">Buscando empenhos…</p>
+        {% else %}
+        <p class="text-body-lg">Nenhum resultado.</p>
+        {% endif %}
       </div>
 
+      <!-- Results Table -->
       <div
         class="overflow-x-auto {% if not results %}hidden{% endif %}"
         id="results-wrap"
       >
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="min-w-full divide-y divide-surface-container">
+          <thead class="bg-surface-dim">
             <tr>
               <th class="px-4 py-3 w-10">
                 <input
                   type="checkbox"
                   id="toggle-all"
-                  class="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  class="rounded text-primary focus:ring-primary cursor-pointer"
                 />
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
               >
                 Data
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
               >
                 Documento
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase min-w-48"
+                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide min-w-48"
               >
                 Órgão
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                class="px-4 py-3 text-left text-label-sm font-semibold text-on-surface-variant uppercase tracking-wide"
               >
                 Valor
               </th>
               <th class="px-4 py-3 w-10"></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-200" id="results-body">
+          <tbody class="divide-y divide-surface-container" id="results-body">
             {% for r in results %}
             <tr
-              class="hover:bg-gray-50"
+              class="hover:bg-surface-dim"
               data-rid="{{ r.id }}"
               data-obs="{{ r.observacao or '' }}"
             >
               <td class="px-4 py-4">
                 <input
                   type="checkbox"
-                  class="toggle-included rounded text-blue-600"
+                  class="toggle-included rounded text-primary"
                   data-rid="{{ r.id }}"
                   {%
                   if
@@ -221,21 +286,22 @@
                   %}
                 />
               </td>
-              <td class="px-4 py-4 text-sm text-gray-600">
+              <td class="px-4 py-4 text-body-md text-on-surface-variant">
                 {{ r.data.strftime('%d/%m/%Y') if r.data else '—' }}
               </td>
-              <td class="px-4 py-4 text-sm font-medium text-blue-600">
+              <td class="px-4 py-4 text-body-md font-medium text-primary">
                 <a
                   href="https://portaldatransparencia.gov.br/despesas/recursos-recebidos/empenho/{{ r.documento }}"
                   target="_blank"
-                  class="hover:underline"
-                  >{{ r.documento_resumido or r.documento }}</a
+                  class="hover:text-on-primary-container"
                 >
+                  {{ r.documento_resumido or r.documento }}
+                </a>
               </td>
-              <td class="px-4 py-4 text-sm text-gray-900">
+              <td class="px-4 py-4 text-body-md text-on-surface">
                 {{ r.codigo_orgao or '' }} - {{ r.orgao or '' }}
               </td>
-              <td class="px-4 py-4 text-sm text-gray-900 font-bold">
+              <td class="px-4 py-4 text-body-md text-on-surface font-bold">
                 {% if r.valor is not none %}R$ {{
                 '{:,.2f}'.format(r.valor|float).replace(',', 'X').replace('.',
                 ',').replace('X', '.') }}{% else %}—{% endif %}
@@ -243,7 +309,7 @@
               <td class="px-4 py-4 text-center">
                 {% if r.enrichment_json %}
                 <button
-                  class="expand-btn w-6 h-6 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="expand-btn w-8 h-8 rounded-md text-on-surface-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary"
                   data-rid="{{ r.id }}"
                   type="button"
                 >
@@ -252,7 +318,7 @@
                 {% else %}
                 <span id="spinner-{{ r.id }}">
                   <svg
-                    class="animate-spin h-4 w-4 text-gray-300 inline"
+                    class="animate-spin h-5 w-5 text-surface-container-highest inline"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -276,159 +342,11 @@
               </td>
             </tr>
             <tr
-              class="enrichment-panel bg-gray-50 hidden"
+              class="enrichment-panel bg-surface-dim hidden"
               id="panel-{{ r.id }}"
             >
               <td colspan="6" class="px-6 py-4">
-                <div class="mb-3">
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Descrição
-                  </p>
-                  <p class="text-sm text-gray-700 whitespace-pre-wrap">
-                    {{ r.observacao or '' }}
-                  </p>
-                </div>
-                {% if r.enrichment_json %} {% set enr = r.enrichment_json %} {%
-                set emp = enr.get('empresa', {}) %} {% if emp %}
-                <div class="mb-3">
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Empresa
-                  </p>
-                  <p class="text-sm font-medium text-gray-800">
-                    {{ emp.get('razaoSocial', '') }}{% if
-                    emp.get('nomeFantasia') %} — {{ emp.get('nomeFantasia') }}{%
-                    endif %}
-                  </p>
-                  <div class="flex gap-3 mt-1 flex-wrap">
-                    {% if emp.get('sancionadoCEIS') %}<span
-                      class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium"
-                      >CEIS</span
-                    >{% endif %} {% if emp.get('sancionadoCNEP') %}<span
-                      class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium"
-                      >CNEP</span
-                    >{% endif %} {% if emp.get('sancionadoCEPIM') %}<span
-                      class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium"
-                      >CEPIM</span
-                    >{% endif %} {% if emp.get('possuiContratacao') %}<span
-                      class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700"
-                      >Possui contrato</span
-                    >{% endif %} {% if emp.get('emitiuNFe') %}<span
-                      class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700"
-                      >Emitiu NF-e</span
-                    >{% endif %} {% if emp.get('participanteLicitacao') %}<span
-                      class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700"
-                      >Licitações</span
-                    >{% endif %}
-                  </div>
-                </div>
-                {% endif %} {% set itens = enr.get('itens_empenho', []) %} {% if
-                itens %}
-                <div class="mb-3">
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Itens do empenho
-                  </p>
-                  <table class="text-xs w-full border-collapse">
-                    <thead>
-                      <tr
-                        class="text-left text-gray-500 border-b border-blue-200"
-                      >
-                        <th class="pr-3 py-1">Seq</th>
-                        <th class="pr-3 py-1">Descrição</th>
-                        <th class="pr-3 py-1">Subelemento</th>
-                        <th class="py-1 text-right">Valor Atual</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for item in itens %}
-                      <tr class="border-t border-blue-100">
-                        <td class="pr-3 py-1 text-gray-500 align-top">
-                          {{ item.get('sequencial', '') }}
-                        </td>
-                        <td class="pr-3 py-1 text-gray-800 align-top">
-                          {{ item.get('descricao', '')[:80] }}
-                        </td>
-                        <td class="pr-3 py-1 text-gray-500 align-top">
-                          {{ item.get('codigoSubelemento', '') }} — {{
-                          item.get('descricaoSubelemento', '') }}
-                        </td>
-                        <td
-                          class="py-1 text-right font-medium text-gray-800 align-top"
-                        >
-                          {{ item.get('valorAtual', '') }}
-                        </td>
-                      </tr>
-                      {% for h in item.get('historico', []) %}
-                      <tr class="bg-white">
-                        <td></td>
-                        <td
-                          colspan="3"
-                          class="pr-3 py-0.5 pl-2 border-l-2 border-amber-300"
-                        >
-                          <span class="text-gray-400"
-                            >{{ h.get('data','') }}</span
-                          >
-                          <span class="ml-2 text-gray-600 font-medium"
-                            >{{ h.get('operacao','') }}</span
-                          >
-                          <span class="ml-2 text-gray-500"
-                            >{{ h.get('quantidade','') }} × {{
-                            h.get('valorUnitario','') }}</span
-                          >
-                          <span class="ml-2 font-medium text-gray-700"
-                            >= {{ h.get('valorTotal','') }}</span
-                          >
-                        </td>
-                      </tr>
-                      {% endfor %} {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-                {% endif %} {% set docs = enr.get('documentos_relacionados', [])
-                %} {% if docs %}
-                <div>
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Documentos relacionados
-                  </p>
-                  <table class="text-xs w-full border-collapse">
-                    <thead>
-                      <tr
-                        class="text-left text-gray-500 border-b border-blue-200"
-                      >
-                        <th class="pr-3 py-1">Data</th>
-                        <th class="pr-3 py-1">Fase</th>
-                        <th class="pr-3 py-1">Documento</th>
-                        <th class="py-1">Espécie</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for d in docs %} {% set fase_slug = 'liquidacao' if
-                      d.get('fase') == 'Liquidação' else ('pagamento' if
-                      d.get('fase') == 'Pagamento' else 'empenho') %}
-                      <tr class="border-t border-blue-100">
-                        <td class="pr-3 py-1 text-gray-500">
-                          {{ d.get('data','') }}
-                        </td>
-                        <td class="pr-3 py-1 text-gray-600">
-                          {{ d.get('fase','') }}
-                        </td>
-                        <td class="pr-3 py-1">
-                          <a
-                            href="https://portaldatransparencia.gov.br/despesas/{{ fase_slug }}/{{ d.get('documento','') }}"
-                            target="_blank"
-                            class="text-blue-600 hover:underline font-medium"
-                            >{{ d.get('documentoResumido') or
-                            d.get('documento','') }}</a
-                          >
-                        </td>
-                        <td class="py-1 text-gray-500">
-                          {{ d.get('especie','') }}
-                        </td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
-                </div>
-                {% endif %} {% endif %}
+                <!-- Content injected by JS -->
               </td>
             </tr>
             {% endfor %}
@@ -450,7 +368,6 @@
               e.stopPropagation();
               exportMenu.classList.toggle('hidden');
           });
-
           document.addEventListener('click', (e) => {
               if (!exportBtn.contains(e.target) && !exportMenu.contains(e.target)) {
                   exportMenu.classList.add('hidden');
@@ -462,7 +379,6 @@
       function initToggleAll() {
           const toggleAll = document.getElementById('toggle-all');
           if (!toggleAll) return;
-
           toggleAll.addEventListener('change', function() {
               const checked = toggleAll.checked;
               document.querySelectorAll('.toggle-included').forEach(cb => {
@@ -474,7 +390,7 @@
 
       // ── helpers ──────────────────────────────────────────────────────────────
       function esc(s) {
-          return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          return String(s ?? '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');
       }
 
       function buildPanelHTML(enr, observacao) {
@@ -484,52 +400,52 @@
           let html = '';
 
           if (observacao) {
-              html += `<div class="mb-3">
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Descrição</p>
-                  <p class="text-sm text-gray-700 whitespace-pre-wrap">${esc(observacao)}</p>
+              html += `<div class="mb-4">
+                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-1">Descrição</p>
+                  <p class="text-body-md text-on-surface whitespace-pre-wrap">${esc(observacao)}</p>
               </div>`;
           }
 
           if (emp.razaoSocial) {
               const badges = [
-                  emp.sancionadoCEIS   ? '<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium">CEIS</span>'       : '',
-                  emp.sancionadoCNEP   ? '<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium">CNEP</span>'       : '',
-                  emp.sancionadoCEPIM  ? '<span class="px-2 py-0.5 rounded text-xs bg-red-100 text-red-700 font-medium">CEPIM</span>'      : '',
-                  emp.possuiContratacao? '<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Possui contrato</span>'    : '',
-                  emp.emitiuNFe        ? '<span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-700">Emitiu NF-e</span>'        : '',
-                  emp.participanteLicitacao ? '<span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-700">Licitações</span>'      : '',
+                  emp.sancionadoCEIS   ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-error-container text-on-error-container font-medium">CEIS</span>' : '',
+                  emp.sancionadoCNEP   ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-error-container text-on-error-container font-medium">CNEP</span>' : '',
+                  emp.sancionadoCEPIM  ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-error-container text-on-error-container font-medium">CEPIM</span>' : '',
+                  emp.possuiContratacao? '<span class="px-2 py-1 rounded-sm text-label-sm bg-green-100 text-green-700">Possui contrato</span>' : '',
+                  emp.emitiuNFe        ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-green-100 text-green-700">Emitiu NF-e</span>' : '',
+                  emp.participanteLicitacao ? '<span class="px-2 py-1 rounded-sm text-label-sm bg-primary-container text-on-primary-container">Licitações</span>' : '',
               ].join('');
-              html += `<div class="mb-3">
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Empresa</p>
-                  <p class="text-sm font-medium text-gray-800">${esc(emp.razaoSocial)}${emp.nomeFantasia ? ' — ' + esc(emp.nomeFantasia) : ''}</p>
-                  <div class="flex gap-3 mt-1 flex-wrap">${badges}</div>
+              html += `<div class="mb-4">
+                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-1">Empresa</p>
+                  <p class="text-body-md font-medium text-on-surface">${esc(emp.razaoSocial)}${emp.nomeFantasia ? ' — ' + esc(emp.nomeFantasia) : ''}</p>
+                  <div class="flex gap-2 mt-2 flex-wrap">${badges}</div>
               </div>`;
           }
 
           if (itens.length) {
               const rows = itens.map(i => {
-                  const hist = (i.historico || []).map(h => `<tr class="bg-white">
+                  const hist = (i.historico || []).map(h => `<tr class="bg-surface">
                       <td></td>
-                      <td colspan="3" class="pr-3 py-0.5 pl-2 border-l-2 border-amber-300">
-                          <span class="text-gray-400">${esc(h.data)}</span>
-                          <span class="ml-2 text-gray-600 font-medium">${esc(h.operacao)}</span>
-                          <span class="ml-2 text-gray-500">${esc(h.quantidade)} × ${esc(h.valorUnitario)}</span>
-                          <span class="ml-2 font-medium text-gray-700">= ${esc(h.valorTotal)}</span>
+                      <td colspan="3" class="pr-3 py-1 pl-2 border-l-2 border-amber-300">
+                          <span class="text-label-sm text-on-surface-variant">${esc(h.data)}</span>
+                          <span class="ml-2 text-body-md text-on-surface font-medium">${esc(h.operacao)}</span>
+                          <span class="ml-2 text-label-sm text-on-surface-variant">${esc(h.quantidade)} × ${esc(h.valorUnitario)}</span>
+                          <span class="ml-2 text-body-md text-on-surface font-medium">= ${esc(h.valorTotal)}</span>
                       </td>
                   </tr>`).join('');
-                  return `<tr class="border-t border-blue-100">
-                      <td class="pr-3 py-1 text-gray-500 align-top">${esc(i.sequencial)}</td>
-                      <td class="pr-3 py-1 text-gray-800 align-top">${esc((i.descricao||'').slice(0,80))}</td>
-                      <td class="pr-3 py-1 text-gray-500 align-top">${esc(i.codigoSubelemento)} — ${esc(i.descricaoSubelemento)}</td>
-                      <td class="py-1 text-right font-medium text-gray-800 align-top">${esc(i.valorAtual)}</td>
+                  return `<tr class="border-t border-primary-container/30">
+                      <td class="pr-3 py-2 text-label-sm text-on-surface-variant align-top">${esc(i.sequencial)}</td>
+                      <td class="pr-3 py-2 text-body-md text-on-surface align-top">${esc((i.descricao||'').slice(0,80))}</td>
+                      <td class="pr-3 py-2 text-label-sm text-on-surface-variant align-top">${esc(i.codigoSubelemento)} — ${esc(i.descricaoSubelemento)}</td>
+                      <td class="py-2 text-right text-body-md text-on-surface font-medium align-top">${esc(i.valorAtual)}</td>
                   </tr>${hist}`;
               }).join('');
-              html += `<div class="mb-3">
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Itens do empenho</p>
-                  <table class="text-xs w-full border-collapse">
-                      <thead><tr class="text-left text-gray-500 border-b border-blue-200">
-                          <th class="pr-3 py-1">Seq</th><th class="pr-3 py-1">Descrição</th>
-                          <th class="pr-3 py-1">Subelemento</th><th class="py-1 text-right">Valor Atual</th>
+              html += `<div class="mb-4">
+                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-2">Itens do empenho</p>
+                  <table class="text-label-sm w-full border-collapse">
+                      <thead><tr class="text-left text-on-surface-variant border-b border-primary-container/30">
+                          <th class="pr-3 py-2">Seq</th><th class="pr-3 py-2">Descrição</th>
+                          <th class="pr-3 py-2">Subelemento</th><th class="py-2 text-right">Valor Atual</th>
                       </tr></thead>
                       <tbody>${rows}</tbody>
                   </table>
@@ -542,21 +458,21 @@
                   if (fase === 'Pagamento')  return 'pagamento';
                   return 'empenho';
               }
-              const rows2 = docs.map(d => `<tr class="border-t border-blue-100">
-                  <td class="pr-3 py-1 text-gray-500">${esc(d.data)}</td>
-                  <td class="pr-3 py-1 text-gray-600">${esc(d.fase)}</td>
-                  <td class="pr-3 py-1">
+              const rows2 = docs.map(d => `<tr class="border-t border-primary-container/30">
+                  <td class="pr-3 py-2 text-label-sm text-on-surface-variant">${esc(d.data)}</td>
+                  <td class="pr-3 py-2 text-body-md text-on-surface-variant">${esc(d.fase)}</td>
+                  <td class="pr-3 py-2">
                       <a href="https://portaldatransparencia.gov.br/despesas/${faseSlug(d.fase)}/${esc(d.documento)}"
-                         target="_blank" class="text-blue-600 hover:underline font-medium">${esc(d.documentoResumido||d.documento)}</a>
+                         target="_blank" class="text-primary hover:text-on-primary-container font-medium">${esc(d.documentoResumido||d.documento)}</a>
                   </td>
-                  <td class="py-1 text-gray-500">${esc(d.especie)}</td>
+                  <td class="py-2 text-label-sm text-on-surface-variant">${esc(d.especie)}</td>
               </tr>`).join('');
               html += `<div>
-                  <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Documentos relacionados</p>
-                  <table class="text-xs w-full border-collapse">
-                      <thead><tr class="text-left text-gray-500 border-b border-blue-200">
-                          <th class="pr-3 py-1">Data</th><th class="pr-3 py-1">Fase</th>
-                          <th class="pr-3 py-1">Documento</th><th class="py-1">Espécie</th>
+                  <p class="text-label-sm font-semibold text-on-surface-variant uppercase mb-2">Documentos relacionados</p>
+                  <table class="text-label-sm w-full border-collapse">
+                      <thead><tr class="text-left text-on-surface-variant border-b border-primary-container/30">
+                          <th class="pr-3 py-2">Data</th><th class="pr-3 py-2">Fase</th>
+                          <th class="pr-3 py-2">Documento</th><th class="py-2">Espécie</th>
                       </tr></thead>
                       <tbody>${rows2}</tbody>
                   </table>
@@ -568,7 +484,7 @@
 
       function attachExpandBtn(rid) {
           const btn = document.createElement('button');
-          btn.className = 'expand-btn w-6 h-6 rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500';
+          btn.className = 'expand-btn w-8 h-8 rounded-md text-on-surface-variant hover:bg-surface-container focus:outline-none focus:ring-2 focus:ring-primary';
           btn.dataset.rid = rid;
           btn.textContent = '+';
           btn.type = 'button';
@@ -589,7 +505,7 @@
           const row = panel.previousElementSibling;
           const observacao = row ? row.dataset.obs || '' : '';
           panel.querySelector('td').innerHTML = buildPanelHTML(enr, observacao);
-          panel.classList.remove('hidden');   // briefly show, then hide — user clicks to open
+          panel.classList.remove('hidden');
           panel.classList.add('hidden');
           attachExpandBtn(rid);
       }

@@ -5,37 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gerando export...</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              surface: "#FFFFFF",
+              "surface-dim": "#FAFAFA",
+              "surface-container": "#F8F8F8",
+              "on-surface": "#1a1a1a",
+              "on-surface-variant": "#333333",
+              primary: "#1351B4",
+              "on-primary": "#FFFFFF",
+              "primary-container": "#E8F0FE",
+              "on-primary-container": "#0D47A1",
+              background: "#FFFFFF",
+            },
+            fontFamily: {
+              rawline: ["Raleway", "sans-serif"],
+            },
+            borderRadius: {
+              sm: "2px",
+              DEFAULT: "3px",
+              md: "4px",
+              lg: "6px",
+              xl: "12px",
+            },
+            boxShadow: {
+              card: "0 6px 6px rgba(0, 0, 0, 0.16)",
+              elevated: "0 8px 16px rgba(0, 0, 0, 0.2)",
+            },
+          },
+        },
+      };
+    </script>
   </head>
-  <body class="bg-gray-100 min-h-screen flex items-center justify-center p-8">
+  <body
+    class="bg-background min-h-screen flex items-center justify-center p-8 font-rawline"
+  >
     <div
-      class="max-w-md w-full mx-auto bg-white rounded-lg shadow-md p-8 text-center"
+      class="max-w-md w-full mx-auto bg-surface rounded-lg shadow-elevated p-8 text-center"
     >
+      <!-- Loading State -->
       <div id="loading">
         <div
-          class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-blue-600 mx-auto mb-6"
+          class="animate-spin rounded-full h-16 w-16 border-4 border-surface-container border-t-primary mx-auto mb-6"
         ></div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">
+        <h2 class="text-headline-md text-on-surface font-semibold mb-2">
           Gerando {% if export_type == 'csv' %}CSV{% elif export_type == 'xlsx'
           %}.XLSX{% else %}.ODS{% endif %}
         </h2>
-        <p class="text-gray-500 mb-2">
+        <p class="text-body-md text-on-surface-variant mb-2">
           Buscando dados dos empenhos no Portal da Transparência...
         </p>
-        <p class="text-sm text-gray-400" id="status-msg">
+        <p class="text-label-sm text-on-surface-variant" id="status-msg">
           Aguardando worker...
         </p>
         <div class="mt-6">
           <button
             onclick="history.back()"
-            class="text-sm text-gray-500 hover:text-gray-700 underline"
+            class="text-label-sm text-primary hover:text-on-primary-container underline"
           >
             ← Voltar aos resultados
           </button>
         </div>
       </div>
 
+      <!-- Ready State -->
       <div id="ready" class="hidden">
-        <div class="text-green-500 mb-4">
+        <div class="text-primary mb-4">
           <svg
             class="h-16 w-16 mx-auto"
             fill="none"
@@ -50,30 +88,35 @@
             />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-gray-800 mb-4">Arquivo pronto!</h2>
+        <h2 class="text-headline-md text-on-surface font-semibold mb-4">
+          Arquivo pronto!
+        </h2>
         <a
           id="download-link"
           href="#"
-          class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          class="inline-flex justify-center py-3 px-6 shadow-card text-label-sm font-semibold uppercase tracking-wide text-on-primary bg-primary hover:bg-on-primary-container rounded-md"
         >
           Baixar {% if export_type == 'csv' %}.CSV{% elif export_type == 'xlsx'
           %}.XLSX{% else %}.ODS{% endif %}
         </a>
         <div class="mt-4 flex justify-center">
-          <a href="/" class="text-sm text-gray-500 hover:underline"
+          <a
+            href="/"
+            class="text-label-sm text-primary hover:text-on-primary-container"
             >Nova busca</a
           >
           <button
             onclick="history.back()"
-            class="text-sm text-gray-500 hover:underline ml-4"
+            class="text-label-sm text-primary hover:text-on-primary-container ml-4"
           >
             ← Voltar aos resultados
           </button>
         </div>
       </div>
 
+      <!-- Error State -->
       <div id="error" class="hidden">
-        <div class="text-red-500 mb-4">
+        <div class="text-error mb-4">
           <svg
             class="h-16 w-16 mx-auto"
             fill="none"
@@ -88,11 +131,13 @@
             />
           </svg>
         </div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">
+        <h2 class="text-headline-md text-on-surface font-semibold mb-2">
           Erro ao gerar arquivo
         </h2>
-        <p class="text-sm text-gray-500 mb-4" id="error-msg"></p>
-        <a href="/" class="text-blue-600 hover:underline text-sm"
+        <p class="text-body-md text-on-surface-variant mb-4" id="error-msg"></p>
+        <a
+          href="/"
+          class="text-label-sm text-primary hover:text-on-primary-container"
           >Voltar para busca</a
         >
       </div>
