@@ -1,6 +1,22 @@
 version: "3.8"
 
 services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env.local
+    environment:
+      - FLASK_APP=src.app
+      - PYTHONPATH=/app
+      - APP_ENV=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    command: ["flask", "db", "upgrade"]
+    restart: "no"
+
   web:
     build:
       context: .
@@ -8,6 +24,8 @@ services:
     ports:
       - "5000:5000"
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:

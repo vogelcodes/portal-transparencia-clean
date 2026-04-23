@@ -1,12 +1,30 @@
 version: "3.8"
 
 services:
+  migrate:
+    image: "vogelcodes/portal-transp-web:latest"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - "FLASK_APP=src.app"
+      - "PYTHONPATH=/app"
+      - "APP_ENV=${APP_ENV:-production}"
+      - "SECRET_KEY=${SECRET_KEY}"
+      - "DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}"
+    command: ["flask", "db", "upgrade"]
+    restart: "no"
+
   web:
     image: "vogelcodes/portal-transp-web:latest"
     restart: always
     depends_on:
-      - redis
-      - postgres
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     environment:
       - "SERVICE_FQDN_WEB=${SERVICE_FQDN_WEB:-http://localhost:5000}"
       - "APP_ENV=${APP_ENV:-production}"
@@ -29,8 +47,12 @@ services:
     image: "vogelcodes/portal-transp-worker:latest"
     restart: always
     depends_on:
-      - redis
-      - postgres
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     command: "celery -E -A src.tasks worker --loglevel=info --concurrency=2 --prefetch-multiplier=1"
     environment:
       - "APP_ENV=${APP_ENV:-production}"
@@ -58,6 +80,12 @@ services:
       - postgres
       - "-c"
       - "max_connections=200"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
 volumes:
   portal_redis:
