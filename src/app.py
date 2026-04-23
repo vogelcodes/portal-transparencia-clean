@@ -3,6 +3,7 @@ Portal da Transparência - SaaS
 """
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for, abort
 from flask_login import LoginManager, current_user
+from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 import io
 import base64
@@ -31,6 +32,7 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('APP_ENV') == 'production'
 app.config['WTF_CSRF_TIME_LIMIT'] = None
 
 db.init_app(app)
+migrate_ext = Migrate(app, db)
 csrf = CSRFProtect(app)
 
 login_manager = LoginManager(app)
