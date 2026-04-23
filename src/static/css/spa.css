@@ -1,0 +1,110 @@
+.spa-shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: var(--spacing-container);
+}
+
+.spa-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.spa-nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spa-main {
+  display: grid;
+  gap: 16px;
+}
+
+.spa-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  border: 1px solid var(--color-surface-container-highest);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.status-done { background: #e8f5e9; color: #1b5e20; }
+.status-pending, .status-syncing { background: #fff3cd; color: #856404; }
+.status-error { background: #fdecea; color: #b00020; }
+.status-unknown { background: var(--color-surface-container-high); color: var(--color-on-surface); }
+
+.progress-wrap {
+  width: 100%;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  height: 10px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--color-primary);
+  transition: width 200ms ease;
+}
+
+.arp-card {
+  border: 1px solid var(--color-surface-container-highest);
+}
+
+.item-card {
+  border: 1px solid var(--color-surface-container);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-top: 8px;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.item-meta {
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
+
+.small-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.small-table th,
+.small-table td {
+  border-bottom: 1px solid var(--color-surface-container);
+  padding: 6px;
+  text-align: left;
+}
+
+.small-table th:last-child,
+.small-table td:last-child {
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .spa-shell { padding: 12px; }
+  .spa-header { flex-direction: column; }
+}

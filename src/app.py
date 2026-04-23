@@ -5,9 +5,12 @@ from flask import Flask, render_template, request, jsonify, send_file, redirect,
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
+from datetime import datetime
 import io
 import base64
 import os
+import threading
+import time
 
 from src.tasks import generate_ods_task, generate_xlsx_task, generate_csv_task, fetch_search_results, fetch_enrichment
 from src.db import db
@@ -54,6 +57,45 @@ csrf.exempt(_login_view)
 csrf.exempt(_register_view)
 
 
+# === SPA cache (in-memory TTL) ===
+
+SPA_CACHE_TTL_SECONDS = int(os.getenv('SPA_CACHE_TTL_SECONDS', '30'))
+_spa_cache = {}
+_spa_cache_lock = threading.Lock()
+
+
+def _spa_cache_key(*parts):
+    return ':'.join(str(p) for p in parts)
+
+
+def _spa_cache_get(key):
+    now = time.monotonic()
+    with _spa_cache_lock:
+        entry = _spa_cache.get(key)
+        if not entry:
+            return None
+        if entry['expires_at'] <= now:
+            _spa_cache.pop(key, None)
+            return None
+        return entry['value']
+
+
+def _spa_cache_set(key, value, ttl=SPA_CACHE_TTL_SECONDS):
+    with _spa_cache_lock:
+        _spa_cache[key] = {
+            'value': value,
+            'expires_at': time.monotonic() + ttl,
+        }
+
+
+def _spa_cache_invalidate_for_user(user_id):
+    prefix = f'{user_id}:'
+    with _spa_cache_lock:
+        for key in list(_spa_cache.keys()):
+            if key.startswith(prefix):
+                _spa_cache.pop(key, None)
+
+
 @app.cli.command('init-db')
 def init_db_command():
     """Create all tables."""
@@ -84,6 +126,195 @@ def info():
 @require_auth
 def index():
     return render_template('index.html')
+
+
+@app.route('/SPA', methods=['GET'])
+@require_auth
+def spa_shell():
+    return render_template('spa.html')
+
+
+def _fmt_dt(value):
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return str(value)
+
+
+def _build_dashboard_payload(user_id):
+    from src.auth.models import ArpItem, ArpEmpenho
+
+    uasgs = (UserUasg.query
+             .filter_by(user_id=user_id)
+             .order_by(UserUasg.is_primary.desc(), UserUasg.created_at)
+             .all())
+
+    uasg_stats = []
+    for u in uasgs:
+        arp_count = u.arps.count()
+        item_count = (db.session.query(db.func.count(ArpItem.id))
+                      .join(Arp, ArpItem.arp_id == Arp.id)
+                      .filter(Arp.user_uasg_id == u.id).scalar()) or 0
+        empenho_count = (db.session.query(db.func.count(ArpEmpenho.id))
+                         .join(ArpItem, ArpEmpenho.arp_item_id == ArpItem.id)
+                         .join(Arp, ArpItem.arp_id == Arp.id)
+                         .filter(Arp.user_uasg_id == u.id).scalar()) or 0
+        uasg_stats.append({
+            'id': u.id,
+            'codigo_uasg': u.codigo_uasg,
+            'nome_uasg': u.nome_uasg,
+            'sigla_uf': u.sigla_uf,
+            'nome_municipio': u.nome_municipio,
+            'cnpj': u.cnpj,
+            'sync_status': u.sync_status,
+            'sync_error': u.sync_error,
+            'synced_at': _fmt_dt(u.synced_at),
+            'arp_count': arp_count,
+            'item_count': item_count,
+            'empenho_count': empenho_count,
+        })
+
+    searches = (Search.query
+                .filter_by(user_id=user_id)
+                .order_by(Search.created_at.desc())
+                .limit(20)
+                .all())
+    search_rows = [{
+        'id': s.id,
+        'name': s.name,
+        'cnpj': s.cnpj,
+        'pregao_filter': s.pregao_filter,
+        'status': s.status,
+        'error': s.error,
+        'created_at': _fmt_dt(s.created_at),
+        'updated_at': _fmt_dt(s.updated_at),
+        'results_count': s.results.count(),
+    } for s in searches]
+
+    return {
+        'generated_at': datetime.utcnow().isoformat() + 'Z',
+        'uasgs': uasg_stats,
+        'searches': search_rows,
+    }
+
+
+def _build_uasg_payload(user_id, uasg_id):
+    u = UserUasg.query.filter_by(id=uasg_id, user_id=user_id).first_or_404()
+    arps = (Arp.query.filter_by(user_uasg_id=u.id)
+            .order_by(Arp.data_vigencia_inicial.desc().nullslast())
+            .all())
+
+    arp_rows = []
+    for arp in arps:
+        item_rows = []
+        total_qty_hom = 0.0
+        total_qty_emp = 0.0
+
+        for item in arp.items.order_by('numero_item').all():
+            raw_item = item.raw_json or {}
+            qty_hom = float(raw_item.get('quantidadeHomologadaItem') or 0)
+            qty_emp = 0.0
+            empenho_rows = []
+
+            for emp in item.empenhos.order_by('id').all():
+                raw_emp = emp.raw_json or {}
+                emp_qty = float(raw_emp.get('quantidadeEmpenhada') or 0)
+                qty_emp += emp_qty
+                empenho_rows.append({
+                    'id': emp.id,
+                    'numero_empenho': emp.numero_empenho,
+                    'valor': float(emp.valor) if emp.valor is not None else None,
+                    'data': _fmt_dt(emp.data),
+                    'unidade': raw_emp.get('unidade'),
+                    'tipo': raw_emp.get('tipo'),
+                    'quantidade_registrada': raw_emp.get('quantidadeRegistrada'),
+                    'quantidade_empenhada': raw_emp.get('quantidadeEmpenhada'),
+                    'saldo_empenho': raw_emp.get('saldoEmpenho'),
+                    'data_hora_atualizacao': raw_emp.get('dataHoraAtualizacao'),
+                })
+
+            percentual = 0.0
+            if qty_hom > 0:
+                percentual = min(100.0, max(0.0, (qty_emp / qty_hom) * 100))
+
+            item_rows.append({
+                'id': item.id,
+                'numero_item': item.numero_item,
+                'descricao': item.descricao or raw_item.get('descricaoItem'),
+                'quantidade_registrada': float(item.quantidade) if item.quantidade is not None else None,
+                'valor_unitario': float(item.valor_unitario) if item.valor_unitario is not None else None,
+                'fornecedor': raw_item.get('nomeRazaoSocialFornecedor'),
+                'fornecedor_documento': raw_item.get('niFornecedor'),
+                'quantidade_homologada': qty_hom,
+                'quantidade_empenhada_total': qty_emp,
+                'percentual_empenhado': round(percentual, 2),
+                'valor_total': float(raw_item.get('valorTotal')) if raw_item.get('valorTotal') is not None else None,
+                'empenhos': empenho_rows,
+            })
+
+            total_qty_hom += qty_hom
+            total_qty_emp += qty_emp
+
+        percentual_arp = 0.0
+        if total_qty_hom > 0:
+            percentual_arp = min(100.0, max(0.0, (total_qty_emp / total_qty_hom) * 100))
+
+        arp_rows.append({
+            'id': arp.id,
+            'numero_controle_pncp_ata': arp.numero_controle_pncp_ata,
+            'numero_ata_registro_preco': arp.numero_ata_registro_preco,
+            'objeto': arp.objeto,
+            'data_vigencia_inicial': _fmt_dt(arp.data_vigencia_inicial),
+            'data_vigencia_final': _fmt_dt(arp.data_vigencia_final),
+            'total_itens': len(item_rows),
+            'itens_com_empenho': sum(1 for i in item_rows if i['empenhos']),
+            'total_quantidade_homologada': round(total_qty_hom, 2),
+            'total_quantidade_empenhada': round(total_qty_emp, 2),
+            'percentual_empenhado': round(percentual_arp, 2),
+            'itens': item_rows,
+        })
+
+    return {
+        'uasg': {
+            'id': u.id,
+            'codigo_uasg': u.codigo_uasg,
+            'nome_uasg': u.nome_uasg,
+            'sigla_uf': u.sigla_uf,
+            'nome_municipio': u.nome_municipio,
+            'cnpj': u.cnpj,
+            'sync_status': u.sync_status,
+            'sync_error': u.sync_error,
+            'synced_at': _fmt_dt(u.synced_at),
+        },
+        'arps': arp_rows,
+    }
+
+
+@app.route('/api/spa/dashboard', methods=['GET'])
+@require_auth
+def spa_dashboard_api():
+    cache_key = _spa_cache_key(current_user.id, 'dashboard')
+    cached_payload = _spa_cache_get(cache_key)
+    if cached_payload is not None:
+        return jsonify({**cached_payload, 'cache': {'cached': True, 'ttl_seconds': SPA_CACHE_TTL_SECONDS}})
+
+    payload = _build_dashboard_payload(current_user.id)
+    _spa_cache_set(cache_key, payload)
+    return jsonify({**payload, 'cache': {'cached': False, 'ttl_seconds': SPA_CACHE_TTL_SECONDS}})
+
+
+@app.route('/api/spa/uasg/<int:uasg_id>', methods=['GET'])
+@require_auth
+def spa_uasg_api(uasg_id):
+    cache_key = _spa_cache_key(current_user.id, 'uasg', uasg_id)
+    cached_payload = _spa_cache_get(cache_key)
+    if cached_payload is not None:
+        return jsonify({**cached_payload, 'cache': {'cached': True, 'ttl_seconds': SPA_CACHE_TTL_SECONDS}})
+
+    payload = _build_uasg_payload(current_user.id, uasg_id)
+    _spa_cache_set(cache_key, payload)
+    return jsonify({**payload, 'cache': {'cached': False, 'ttl_seconds': SPA_CACHE_TTL_SECONDS}})
 
 
 @app.route('/dashboard', methods=['GET'])
@@ -158,6 +389,7 @@ def uasg_resync(uasg_id):
     u.sync_error = None
     db.session.commit()
     sync_uasg_data.delay(u.id, full_refresh=True)
+    _spa_cache_invalidate_for_user(current_user.id)
     referer = request.referrer or ''
     if '/dashboard' in referer:
         return redirect(url_for('dashboard'))
@@ -199,6 +431,7 @@ def searches_create():
     )
     db.session.add(s)
     db.session.commit()
+    _spa_cache_invalidate_for_user(current_user.id)
     fetch_search_results.delay(s.id)
     return redirect(url_for('searches_detail', search_id=s.id))
 
@@ -213,6 +446,7 @@ def searches_detail(search_id):
     if is_delete:
         db.session.delete(s)
         db.session.commit()
+        _spa_cache_invalidate_for_user(current_user.id)
         if request.method == 'DELETE':
             return '', 204
         return redirect(url_for('searches_list'))
@@ -240,6 +474,7 @@ def searches_refresh(search_id):
     s.status = 'pending'
     s.error = None
     db.session.commit()
+    _spa_cache_invalidate_for_user(current_user.id)
     fetch_search_results.delay(s.id)
     return redirect(url_for('searches_detail', search_id=s.id))
 

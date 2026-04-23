@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}<title>Portal Transparencia SPA</title>{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="/static/css/spa.css" />
+{% endblock %}
+
+{% block content %}
+<div class="spa-shell">
+  <header class="spa-header card-elevated">
+    <div>
+      <div class="font-label-sm text-on-surface-variant">Portal Transparência</div>
+      <h1 class="font-headline-md">Portal Transparencia SPA</h1>
+      <p class="text-on-surface-variant">Visão de situação dos empenhos por item e ARP da sua UASG.</p>
+    </div>
+    <nav class="spa-nav">
+      <a class="btn btn-ghost" href="#/">Dashboard</a>
+      <a class="btn btn-ghost" href="/dashboard">UI atual</a>
+      <a class="btn btn-ghost" href="/auth/logout">Sair</a>
+    </nav>
+  </header>
+
+  <main id="spa-app" class="spa-main" aria-live="polite"></main>
+</div>
+<script src="/static/js/spa.js"></script>
+{% endblock %}
