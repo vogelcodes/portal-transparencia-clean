@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}<title>Dashboard de ARPs · Portal da Transparência</title>{% endblock %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="/static/css/spav2.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block content %}
+<div id="spav2-root">
+  {% if not payload %}
+    <div class="spav2-empty">
+      <h1>Nenhuma UASG cadastrada</h1>
+      <p>Adicione uma UASG para visualizar o dashboard.</p>
+      <a class="btn btn-primary" href="/dashboard">Ir para o painel</a>
+    </div>
+  {% endif %}
+</div>
+
+{% if payload %}
+<script>
+  window.SPAV2_PAYLOAD = {{ payload | tojson }};
+  window.SPAV2_UASGS   = {{ uasg_options | tojson }};
+  window.SPAV2_SELECTED = {{ selected_id | tojson }};
+</script>
+<script type="text/babel" src="/static/js/spav2.js"></script>
+{% endif %}
+{% endblock %}

@@ -134,6 +134,32 @@ def spa_shell():
     return render_template('spa.html')
 
 
+@app.route('/SPAv2', methods=['GET'])
+@require_auth
+def spav2_shell():
+    uasgs = (UserUasg.query
+             .filter_by(user_id=current_user.id)
+             .order_by(UserUasg.is_primary.desc(), UserUasg.created_at)
+             .all())
+    selected_id = request.args.get('uasg', type=int)
+    if selected_id:
+        selected = next((u for u in uasgs if u.id == selected_id), None)
+    else:
+        selected = uasgs[0] if uasgs else None
+    payload = _build_uasg_payload(current_user.id, selected.id) if selected else None
+    uasg_options = [{
+        'id': u.id,
+        'codigo_uasg': u.codigo_uasg,
+        'nome_uasg': u.nome_uasg,
+    } for u in uasgs]
+    return render_template(
+        'spav2.html',
+        payload=payload,
+        uasg_options=uasg_options,
+        selected_id=selected.id if selected else None,
+    )
+
+
 def _fmt_dt(value):
     if not value:
         return None

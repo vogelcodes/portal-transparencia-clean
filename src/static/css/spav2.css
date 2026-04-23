@@ -1,0 +1,55 @@
+html, body { margin: 0; padding: 0; background: #F4F4F4; min-height: 100vh; }
+
+#spav2-root { min-height: 100vh; display: flex; flex-direction: column; }
+
+.spav2-shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.spav2-bar {
+  background: #071D41;
+  color: #FFF;
+  padding: 10px 24px;
+  font-family: var(--font-sans, "Anthropic", sans-serif);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.spav2-head {
+  background: #FFF;
+  border-bottom: 1px solid #E8E8E8;
+  padding: 20px 0;
+}
+
+.spav2-empty {
+  max-width: 480px;
+  margin: 80px auto;
+  padding: 32px;
+  background: #FFF;
+  border: 1px solid #E8E8E8;
+  border-radius: 8px;
+  text-align: center;
+  font-family: var(--font-sans, "Anthropic", sans-serif);
+}
+
+.spav2-empty h1 { font-size: 22px; margin: 0 0 8px; }
+.spav2-empty p  { color: #333; margin: 0 0 20px; }
+
+.spav2-uasg-select {
+  margin-left: auto;
+  background: transparent;
+  color: #FFF;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.spav2-uasg-select option { color: #1a1a1a; }
