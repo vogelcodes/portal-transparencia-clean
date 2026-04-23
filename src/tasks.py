@@ -266,6 +266,45 @@ def sync_uasg_data(user_uasg_id, full_refresh=False):
             raise
 
 
+@celery.task(name="export_uasg_xlsx")
+def export_uasg_xlsx_task(user_uasg_id):
+    from src.app import app
+    from src.exports import flatten_uasg, render_arp_xlsx
+    with app.app_context():
+        bundle = flatten_uasg(user_uasg_id)
+        blob = render_arp_xlsx(bundle)
+    slug = bundle['meta']['codigo_uasg']
+    filename = f"arp_{slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    return {'blob_b64': base64.b64encode(blob).decode(), 'filename': filename,
+            'mimetype': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
+
+
+@celery.task(name="export_uasg_csv")
+def export_uasg_csv_task(user_uasg_id):
+    from src.app import app
+    from src.exports import flatten_uasg, render_arp_csv
+    with app.app_context():
+        bundle = flatten_uasg(user_uasg_id)
+        blob = render_arp_csv(bundle)
+    slug = bundle['meta']['codigo_uasg']
+    filename = f"arp_{slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    return {'blob_b64': base64.b64encode(blob).decode(), 'filename': filename,
+            'mimetype': 'text/csv'}
+
+
+@celery.task(name="export_uasg_ods")
+def export_uasg_ods_task(user_uasg_id):
+    from src.app import app
+    from src.exports import flatten_uasg, render_arp_ods
+    with app.app_context():
+        bundle = flatten_uasg(user_uasg_id)
+        blob = render_arp_ods(bundle)
+    slug = bundle['meta']['codigo_uasg']
+    filename = f"arp_{slug}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.ods"
+    return {'blob_b64': base64.b64encode(blob).decode(), 'filename': filename,
+            'mimetype': 'application/vnd.oasis.opendocument.spreadsheet'}
+
+
 @celery.task(name="generate_ods")
 def generate_ods_task(search_id):
     from src.app import app

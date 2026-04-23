@@ -396,6 +396,70 @@ def uasg_resync(uasg_id):
     return redirect(url_for('uasg_detail', uasg_id=u.id))
 
 
+_UASG_EXPORT_TASKS = {
+    'xlsx': 'export_uasg_xlsx_task',
+    'csv':  'export_uasg_csv_task',
+    'ods':  'export_uasg_ods_task',
+}
+
+@app.route('/uasg/<int:uasg_id>/export/<fmt>', methods=['POST'])
+@require_auth
+def uasg_export_start(uasg_id, fmt):
+    if fmt not in _UASG_EXPORT_TASKS:
+        abort(404)
+    u = UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    from src.tasks import export_uasg_xlsx_task, export_uasg_csv_task, export_uasg_ods_task
+    task_fn = {'xlsx': export_uasg_xlsx_task, 'csv': export_uasg_csv_task,
+               'ods': export_uasg_ods_task}[fmt]
+    task = task_fn.delay(u.id)
+    return redirect(url_for('uasg_export_wait', uasg_id=u.id, fmt=fmt, task_id=task.id))
+
+
+@app.route('/uasg/<int:uasg_id>/export/<fmt>/wait/<task_id>')
+@require_auth
+def uasg_export_wait(uasg_id, fmt, task_id):
+    if fmt not in _UASG_EXPORT_TASKS:
+        abort(404)
+    UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    return render_template('uasg_export_wait.html', uasg_id=uasg_id, fmt=fmt, task_id=task_id)
+
+
+@app.route('/uasg/<int:uasg_id>/export/<fmt>/status/<task_id>')
+@require_auth
+def uasg_export_status(uasg_id, fmt, task_id):
+    if fmt not in _UASG_EXPORT_TASKS:
+        abort(404)
+    UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    from src.tasks import export_uasg_xlsx_task, export_uasg_csv_task, export_uasg_ods_task
+    task_fn = {'xlsx': export_uasg_xlsx_task, 'csv': export_uasg_csv_task,
+               'ods': export_uasg_ods_task}[fmt]
+    result = task_fn.AsyncResult(task_id)
+    if result.state == 'SUCCESS':
+        return jsonify({'status': 'SUCCESS'})
+    if result.state == 'FAILURE':
+        return jsonify({'status': 'FAILURE', 'error': str(result.info)})
+    return jsonify({'status': result.state})
+
+
+@app.route('/uasg/<int:uasg_id>/export/<fmt>/download/<task_id>')
+@require_auth
+def uasg_export_download(uasg_id, fmt, task_id):
+    if fmt not in _UASG_EXPORT_TASKS:
+        abort(404)
+    UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    from src.tasks import export_uasg_xlsx_task, export_uasg_csv_task, export_uasg_ods_task
+    task_fn = {'xlsx': export_uasg_xlsx_task, 'csv': export_uasg_csv_task,
+               'ods': export_uasg_ods_task}[fmt]
+    result = task_fn.AsyncResult(task_id)
+    if result.state != 'SUCCESS':
+        return redirect(url_for('uasg_export_wait', uasg_id=uasg_id, fmt=fmt, task_id=task_id))
+    data = result.get()
+    buf = io.BytesIO(base64.b64decode(data['blob_b64']))
+    buf.seek(0)
+    return send_file(buf, mimetype=data['mimetype'], as_attachment=True,
+                     download_name=data['filename'])
+
+
 # === Searches ===
 
 def _owned_search_or_404(search_id):

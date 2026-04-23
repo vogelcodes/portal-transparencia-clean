@@ -57,6 +57,18 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="text-primary text-xs hover:underline">Ressincronizar</button>
           </form>
+          {% if u.sync_status == 'done' %}
+          <div class="flex gap-2 mt-3 justify-end">
+            {% for fmt, label in [('xlsx', '.XLSX'), ('ods', '.ODS'), ('csv', '.CSV')] %}
+            <form method="POST" action="/uasg/{{ u.id }}/export/{{ fmt }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="text-xs px-2 py-1 rounded border border-primary text-primary hover:bg-primary hover:text-on-primary transition-colors">
+                {{ label }}
+              </button>
+            </form>
+            {% endfor %}
+          </div>
+          {% endif %}
           {% if u.synced_at %}
           <p class="text-xs text-on-surface-variant mt-1">Atualizado: {{ u.synced_at.strftime('%d/%m/%Y %H:%M') }}</p>
           {% endif %}
