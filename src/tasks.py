@@ -139,6 +139,133 @@ def fetch_search_results(search_id):
             raise
 
 
+def _parse_iso_date(s):
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(str(s).replace('Z', '+00:00')).date()
+    except Exception:
+        try:
+            return datetime.strptime(str(s)[:10], '%Y-%m-%d').date()
+        except Exception:
+            return None
+
+
+def _to_decimal(v):
+    if v is None:
+        return None
+    try:
+        if isinstance(v, str):
+            return float(v.replace('.', '').replace(',', '.')) if ',' in v else float(v)
+        return float(v)
+    except Exception:
+        return None
+
+
+@celery.task(name="sync_uasg_data", max_retries=1, default_retry_delay=120)
+def sync_uasg_data(user_uasg_id, full_refresh=False):
+    from collections import defaultdict
+    from src.app import app
+    from src.auth.models import UserUasg, Arp, ArpItem, ArpEmpenho
+    from src.uasg_fetcher import fetch_all_arps, fetch_arp_itens, fetch_arp_empenhos, SLEEP
+    from src.db import db
+    import time as _time
+
+    with app.app_context():
+        u = UserUasg.query.get(user_uasg_id)
+        if not u:
+            return {"status": "missing"}
+        u.sync_status = 'syncing'
+        u.sync_error = None
+        u.last_arp_count = 0
+        db.session.commit()
+
+        if full_refresh:
+            Arp.query.filter_by(user_uasg_id=u.id).delete(synchronize_session=False)
+            db.session.commit()
+
+        try:
+            arps_data = fetch_all_arps(u.codigo_uasg, data_inicio='2024-04-22')
+
+            for arp_data in arps_data:
+                numero_controle = arp_data.get('numeroControlePncpAta') or ''
+                if not numero_controle:
+                    continue
+
+                arp = Arp.query.filter_by(
+                    user_uasg_id=u.id,
+                    numero_controle_pncp_ata=numero_controle,
+                ).first()
+                if not arp:
+                    arp = Arp(user_uasg_id=u.id, numero_controle_pncp_ata=numero_controle)
+                    db.session.add(arp)
+
+                arp.numero_ata_registro_preco = arp_data.get('numeroAtaRegistroPreco')
+                arp.data_vigencia_inicial = _parse_iso_date(arp_data.get('dataVigenciaInicial'))
+                arp.data_vigencia_final = _parse_iso_date(arp_data.get('dataVigenciaFinal'))
+                arp.objeto = arp_data.get('objetoContratacao') or arp_data.get('objeto')
+                arp.raw_json = arp_data
+                db.session.flush()
+
+                itens_data = fetch_arp_itens(numero_controle)
+                _time.sleep(SLEEP)
+
+                existing_items = {it.numero_item: it for it in arp.items}
+                for item_data in itens_data:
+                    num_item = str(item_data.get('numeroItem') or '')
+                    if not num_item:
+                        continue
+                    item = existing_items.get(num_item)
+                    if not item:
+                        item = ArpItem(arp_id=arp.id, numero_item=num_item)
+                        db.session.add(item)
+                        existing_items[num_item] = item
+                    item.descricao = item_data.get('descricaoItem') or item_data.get('descricao')
+                    item.quantidade = _to_decimal(item_data.get('quantidadeRegistrada'))
+                    item.valor_unitario = _to_decimal(item_data.get('valorUnitarioRegistrado'))
+                    item.raw_json = item_data
+                db.session.flush()
+
+                numero_ata = arp_data.get('numeroAtaRegistroPreco')
+                if numero_ata:
+                    empenhos_data = fetch_arp_empenhos(numero_ata, u.codigo_uasg)
+                    _time.sleep(SLEEP)
+
+                    empenhos_by_item = defaultdict(list)
+                    for emp in empenhos_data:
+                        empenhos_by_item[str(emp.get('numeroItem') or '')].append(emp)
+
+                    for item in arp.items:
+                        for old in list(item.empenhos):
+                            db.session.delete(old)
+                        for emp_data in empenhos_by_item.get(item.numero_item, []):
+                            emp = ArpEmpenho(
+                                arp_item_id=item.id,
+                                numero_empenho=str(emp_data.get('numeroEmpenho') or ''),
+                                valor=_to_decimal(emp_data.get('valorEmpenho')),
+                                data=_parse_iso_date(emp_data.get('dataEmissao')),
+                                raw_json=emp_data,
+                            )
+                            db.session.add(emp)
+
+                db.session.commit()
+
+            u.sync_status = 'done'
+            u.synced_at = datetime.now(timezone.utc)
+            u.last_arp_count = len(arps_data)
+            db.session.commit()
+            return {"status": "done", "arps": len(arps_data)}
+
+        except Exception as e:
+            db.session.rollback()
+            u2 = UserUasg.query.get(user_uasg_id)
+            if u2:
+                u2.sync_status = 'error'
+                u2.sync_error = str(e)[:2000]
+                db.session.commit()
+            raise
+
+
 @celery.task(name="generate_ods")
 def generate_ods_task(search_id):
     from src.app import app

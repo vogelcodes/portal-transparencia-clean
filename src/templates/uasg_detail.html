@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}<title>UASG {{ u.codigo_uasg }} - Portal Transparência</title>{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          surface: "var(--color-surface)",
+          "surface-dim": "var(--color-surface-dim)",
+          "surface-container": "var(--color-surface-container)",
+          "surface-container-high": "var(--color-surface-container-high)",
+          "on-surface": "var(--color-on-surface)",
+          "on-surface-variant": "var(--color-on-surface-variant)",
+          primary: "var(--color-primary)",
+          error: "var(--color-error)",
+          background: "var(--color-background)",
+        },
+      },
+    },
+  };
+</script>
+{% endblock %}
+
+{% macro fmt_brl(v) %}{% if v is not none %}R$ {{ '%.2f'|format(v|float) }}{% else %}—{% endif %}{% endmacro %}
+{% macro rj(obj, key) %}{{ (obj or {})[key] if obj and key in obj else '—' }}{% endmacro %}
+
+{% block content %}
+<div class="p-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-4">
+      <a href="/dashboard" class="text-primary text-sm hover:underline">← Painel</a>
+    </div>
+
+    <header class="bg-surface rounded-lg shadow p-6 mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold text-on-surface">{{ u.nome_uasg or u.codigo_uasg }}</h1>
+          <p class="text-on-surface-variant mt-1">
+            <span class="font-mono">{{ u.codigo_uasg }}</span>
+            {% if u.nome_municipio %} · {{ u.nome_municipio }}{% endif %}
+            {% if u.sigla_uf %} — {{ u.sigla_uf }}{% endif %}
+          </p>
+          {% if u.cnpj %}<p class="text-xs text-on-surface-variant mt-1">CNPJ: {{ u.cnpj }}</p>{% endif %}
+        </div>
+        <div class="text-right">
+          <span class="inline-block px-3 py-1 rounded text-sm font-medium
+            {% if u.sync_status == 'done' %}bg-green-900 text-green-200
+            {% elif u.sync_status in ('syncing','pending') %}bg-yellow-900 text-yellow-200
+            {% elif u.sync_status == 'error' %}bg-red-900 text-red-200
+            {% else %}bg-gray-800 text-gray-200{% endif %}">
+            {{ u.sync_status }}
+          </span>
+          <form method="POST" action="/uasg/{{ u.id }}/resync" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="text-primary text-xs hover:underline">Ressincronizar</button>
+          </form>
+          {% if u.synced_at %}
+          <p class="text-xs text-on-surface-variant mt-1">Atualizado: {{ u.synced_at.strftime('%d/%m/%Y %H:%M') }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% if u.sync_error %}
+      <div class="mt-3 p-3 bg-red-950 border border-red-900 rounded text-red-200 text-sm">
+        <strong>Erro:</strong> {{ u.sync_error }}
+      </div>
+      {% endif %}
+    </header>
+
+    <section class="bg-surface rounded-lg shadow p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold text-on-surface">
+          Atas de Registro de Preço (<span id="arp-visible-count">{{ arp_data|length }}</span>)
+        </h2>
+        <label class="flex items-center gap-2 text-sm text-on-surface-variant cursor-pointer select-none">
+          <input type="checkbox" id="hide-empty-arps" class="accent-primary" />
+          Ocultar ARPs sem empenho
+        </label>
+      </div>
+
+      {% if not arp_data %}
+      <p class="text-on-surface-variant">
+        {% if u.sync_status in ('syncing','pending') %}Sincronização em andamento. Esta página atualizará automaticamente.
+        {% else %}Nenhuma ARP encontrada para esta UASG.{% endif %}
+      </p>
+      {% else %}
+      <div class="space-y-3">
+        {% for entry in arp_data %}
+        {% set arp = entry.arp %}
+        {% set items = entry.itens %}
+        <details class="bg-surface-container rounded-lg" data-has-empenho="{{ 'true' if items else 'false' }}">
+          <summary class="cursor-pointer select-none p-4 hover:bg-surface-dim">
+            <div class="flex justify-between items-start gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="font-mono text-sm font-semibold text-on-surface">
+                  {{ arp.numero_ata_registro_preco or arp.numero_controle_pncp_ata }}
+                </div>
+                <div class="text-xs text-on-surface-variant mt-1">{{ arp.objeto or '—' }}</div>
+              </div>
+              <div class="text-right text-xs text-on-surface-variant whitespace-nowrap">
+                {% if arp.data_vigencia_inicial %}
+                {{ arp.data_vigencia_inicial.strftime('%d/%m/%Y') }}
+                {% if arp.data_vigencia_final %} – {{ arp.data_vigencia_final.strftime('%d/%m/%Y') }}{% endif %}
+                {% endif %}
+                <div class="mt-1">{{ items|length }} iten{{ 's' if items|length != 1 }} c/ empenho</div>
+              </div>
+            </div>
+          </summary>
+
+          {% if not items %}
+          <div class="border-t border-surface px-4 py-3 text-xs text-on-surface-variant">
+            Nenhum item com empenho.
+          </div>
+          {% else %}
+          <div class="border-t border-surface divide-y divide-surface">
+            {% for entry2 in entry.itens %}
+            {% set it = entry2.item %}
+            {% set rj = it.raw_json or {} %}
+            {% set emps = entry2.emps %}
+            <div class="px-4 py-4">
+
+              {# ── Item header ── #}
+              <div class="flex flex-wrap gap-x-6 gap-y-1 mb-2">
+                <span class="text-xs font-mono text-on-surface-variant">Item {{ it.numero_item }}</span>
+                <span class="text-sm text-on-surface font-medium flex-1">{{ it.descricao or rj.get('descricaoItem') or '—' }}</span>
+              </div>
+
+              {# ── Progresso empenhado / homologado ── #}
+              {% set qty_hom = (rj.get('quantidadeHomologadaItem') or 0)|float %}
+              {% set ns = namespace(qty_emp=0) %}
+              {% for e in emps %}
+                {% set ns.qty_emp = ns.qty_emp + ((e.raw_json or {}).get('quantidadeEmpenhada') or 0)|float %}
+              {% endfor %}
+              {% if qty_hom > 0 %}
+                {% set pct = [[(ns.qty_emp / qty_hom * 100), 0]|max, 100]|min %}
+                {% set hue = (120 - pct * 1.2)|int %}
+                <div class="mb-3">
+                  <div class="flex justify-between text-xs text-on-surface-variant mb-1">
+                    <span>Empenhado: <strong class="text-on-surface">{{ ns.qty_emp|int }}</strong> / {{ qty_hom|int }}</span>
+                    <span>{{ '%.1f'|format(pct) }}%</span>
+                  </div>
+                  <div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--color-surface)">
+                    <div class="h-full rounded-full transition-all"
+                         style="width:{{ pct }}%; background:hsl({{ hue }},75%,42%)"></div>
+                  </div>
+                </div>
+              {% endif %}
+
+              {# ── Fornecedor + Valores ── #}
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                <div>
+                  <div class="text-xs text-on-surface-variant mb-0.5">Fornecedor</div>
+                  <div class="text-xs text-on-surface font-medium">{{ rj.get('nomeRazaoSocialFornecedor') or '—' }}</div>
+                  {% if rj.get('niFornecedor') %}
+                  <div class="text-xs text-on-surface-variant font-mono">{{ rj.get('niFornecedor') }}</div>
+                  {% endif %}
+                </div>
+                <div>
+                  <div class="text-xs text-on-surface-variant mb-0.5">Valor Unitário</div>
+                  <div class="text-xs text-on-surface font-medium">
+                    {% if rj.get('valorUnitario') is not none %}R$ {{ '%.2f'|format(rj.get('valorUnitario')|float) }}
+                    {% elif it.valor_unitario is not none %}R$ {{ '%.2f'|format(it.valor_unitario|float) }}
+                    {% else %}—{% endif %}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-on-surface-variant mb-0.5">Valor Total</div>
+                  <div class="text-xs text-on-surface font-medium">
+                    {% if rj.get('valorTotal') is not none %}R$ {{ '%.2f'|format(rj.get('valorTotal')|float) }}
+                    {% else %}—{% endif %}
+                  </div>
+                </div>
+                <div>
+                  <div class="text-xs text-on-surface-variant mb-0.5">Qtd. Registrada</div>
+                  <div class="text-xs text-on-surface font-medium">{{ it.quantidade or rj.get('quantidadeRegistrada') or '—' }}</div>
+                </div>
+              </div>
+
+              {# ── Empenhos por unidade ── #}
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs border-collapse">
+                  <thead>
+                    <tr class="text-left text-on-surface-variant uppercase tracking-wide bg-surface">
+                      <th class="py-1.5 px-2">Unidade</th>
+                      <th class="py-1.5 px-2">Tipo</th>
+                      <th class="py-1.5 px-2 text-right">Qtd. Reg.</th>
+                      <th class="py-1.5 px-2 text-right">Qtd. Emp.</th>
+                      <th class="py-1.5 px-2 text-right">Saldo</th>
+                      <th class="py-1.5 px-2">Atualizado</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-surface">
+                    {% for e in emps %}
+                    {% set ej = e.raw_json or {} %}
+                    <tr class="hover:bg-surface-dim">
+                      <td class="py-1.5 px-2 text-on-surface">{{ ej.get('unidade') or '—' }}</td>
+                      <td class="py-1.5 px-2 text-on-surface-variant">{{ ej.get('tipo') or '—' }}</td>
+                      <td class="py-1.5 px-2 text-right text-on-surface">{{ ej.get('quantidadeRegistrada') if ej.get('quantidadeRegistrada') is not none else '—' }}</td>
+                      <td class="py-1.5 px-2 text-right text-on-surface">{{ ej.get('quantidadeEmpenhada') if ej.get('quantidadeEmpenhada') is not none else '—' }}</td>
+                      <td class="py-1.5 px-2 text-right {% if ej.get('saldoEmpenho') == 0 %}text-on-surface-variant{% else %}text-on-surface{% endif %}">
+                        {{ ej.get('saldoEmpenho') if ej.get('saldoEmpenho') is not none else '—' }}
+                      </td>
+                      <td class="py-1.5 px-2 text-on-surface-variant">
+                        {% set upd = ej.get('dataHoraAtualizacao') %}
+                        {% if upd %}{{ upd[:16].replace('T', ' ') }}{% else %}—{% endif %}
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </details>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const toggle = document.getElementById('hide-empty-arps');
+    const counter = document.getElementById('arp-visible-count');
+    const rows = document.querySelectorAll('[data-has-empenho]');
+
+    function apply() {
+      const hide = toggle.checked;
+      let visible = 0;
+      rows.forEach(el => {
+        const empty = el.dataset.hasEmpenho === 'false';
+        el.style.display = hide && empty ? 'none' : '';
+        if (!hide || !empty) visible++;
+      });
+      counter.textContent = visible;
+    }
+
+    toggle.addEventListener('change', apply);
+  })();
+</script>
+
+{% if u.sync_status in ('syncing', 'pending') %}
+<script>
+  (function () {
+    async function poll() {
+      try {
+        const r = await fetch('/uasg/{{ u.id }}/status');
+        const d = await r.json();
+        if (d.sync_status === 'done' || d.sync_status === 'error') { location.reload(); return; }
+      } catch {}
+      setTimeout(poll, 5000);
+    }
+    setTimeout(poll, 5000);
+  })();
+</script>
+{% endif %}
+{% endblock %}

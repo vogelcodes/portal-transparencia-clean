@@ -16,5 +16,128 @@
 
   <body class="bg-background min-h-screen">
     {% block content %}{% endblock %}
+
+    {% if current_user.is_authenticated and current_user.uasgs.count() == 0 %}
+    <div id="uasg-modal-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;">
+      <div style="background:var(--color-surface);border-radius:8px;padding:2rem;width:100%;max-width:440px;box-shadow:0 8px 32px rgba(0,0,0,.4);">
+        <h2 style="margin:0 0 .5rem;font-size:1.2rem;font-weight:700;color:var(--color-on-surface);">Configure sua UASG</h2>
+        <p style="margin:0 0 1.25rem;font-size:.875rem;color:var(--color-on-surface-variant);">
+          Informe o código da sua Unidade Administrativa de Serviços Gerais para continuar.
+        </p>
+
+        <label style="display:block;font-size:.8rem;font-weight:600;margin-bottom:.35rem;color:var(--color-on-surface-variant);">Código UASG</label>
+        <input
+          id="uasg-input"
+          type="text"
+          inputmode="numeric"
+          maxlength="10"
+          placeholder="ex: 160292"
+          style="width:100%;box-sizing:border-box;padding:.6rem .75rem;border:1px solid var(--color-outline, #555);border-radius:4px;background:var(--color-surface-container);color:var(--color-on-surface);font-size:1rem;"
+        />
+        <div id="uasg-status" style="min-height:1.2rem;margin-top:.4rem;font-size:.8rem;color:var(--color-on-surface-variant);"></div>
+
+        <div id="uasg-card" style="display:none;margin-top:1rem;padding:.85rem;border-radius:6px;background:var(--color-surface-container);border:1px solid var(--color-primary);">
+          <div style="font-weight:700;font-size:.95rem;color:var(--color-on-surface);" id="uasg-nome"></div>
+          <div style="font-size:.8rem;color:var(--color-on-surface-variant);margin-top:.25rem;" id="uasg-local"></div>
+          <div style="font-size:.75rem;color:var(--color-on-surface-variant);margin-top:.15rem;" id="uasg-cnpj"></div>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+          <button
+            id="uasg-confirm-btn"
+            disabled
+            onclick="uasgConfirm()"
+            style="flex:1;padding:.65rem;background:var(--color-primary);color:var(--color-on-primary);border:none;border-radius:4px;font-weight:600;cursor:pointer;opacity:.45;transition:opacity .15s;"
+          >Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function () {
+      const input = document.getElementById('uasg-input');
+      const status = document.getElementById('uasg-status');
+      const card = document.getElementById('uasg-card');
+      const btn = document.getElementById('uasg-confirm-btn');
+      let pending = null;
+      let confirmed = null;
+
+      function setStatus(msg, color) {
+        status.textContent = msg;
+        status.style.color = color || 'var(--color-on-surface-variant)';
+      }
+
+      function showCard(data) {
+        document.getElementById('uasg-nome').textContent = data.nomeUasg || '';
+        document.getElementById('uasg-local').textContent =
+          [data.nomeMunicipio, data.siglaUf].filter(Boolean).join(' — ');
+        document.getElementById('uasg-cnpj').textContent = data.cnpj ? `CNPJ: ${data.cnpj}` : '';
+        card.style.display = 'block';
+        confirmed = data;
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+
+      function hideCard() {
+        card.style.display = 'none';
+        confirmed = null;
+        btn.disabled = true;
+        btn.style.opacity = '.45';
+      }
+
+      async function lookup(codigo) {
+        setStatus('Consultando…');
+        hideCard();
+        try {
+          const r = await fetch(`/auth/uasg/lookup?codigo=${encodeURIComponent(codigo)}`);
+          const data = await r.json();
+          if (!r.ok) { setStatus(data.error || 'Erro na consulta.', 'var(--color-error)'); return; }
+          if (!data.found) { setStatus('UASG não encontrada.', 'var(--color-error)'); return; }
+          setStatus('');
+          showCard(data);
+        } catch {
+          setStatus('Falha de conexão.', 'var(--color-error)');
+        }
+      }
+
+      input.addEventListener('input', function () {
+        const val = this.value.replace(/\D/g, '');
+        this.value = val;
+        hideCard();
+        setStatus('');
+        clearTimeout(pending);
+        if (val.length >= 4) {
+          pending = setTimeout(() => lookup(val), 500);
+        }
+      });
+
+      window.uasgConfirm = async function () {
+        if (!confirmed) return;
+        btn.disabled = true;
+        btn.textContent = 'Salvando…';
+        try {
+          const csrf = document.querySelector('meta[name="csrf-token"]').content;
+          const r = await fetch('/auth/uasg', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf },
+            body: JSON.stringify(confirmed),
+          });
+          if (r.ok) {
+            window.location.href = '/dashboard';
+          } else {
+            const d = await r.json();
+            setStatus(d.error || 'Erro ao salvar.', 'var(--color-error)');
+            btn.disabled = false;
+            btn.textContent = 'Confirmar';
+          }
+        } catch {
+          setStatus('Falha de conexão.', 'var(--color-error)');
+          btn.disabled = false;
+          btn.textContent = 'Confirmar';
+        }
+      };
+    })();
+    </script>
+    {% endif %}
   </body>
 </html>

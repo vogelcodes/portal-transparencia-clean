@@ -12,7 +12,7 @@ import os
 from src.tasks import generate_ods_task, generate_xlsx_task, generate_csv_task, fetch_search_results, fetch_enrichment
 from src.db import db
 from src.auth import auth_bp
-from src.auth.models import User, Search, SearchResult
+from src.auth.models import User, Search, SearchResult, UserUasg, Arp
 from src.auth.decorators import require_auth
 
 # Configure static folder for design system CSS
@@ -84,6 +84,84 @@ def info():
 @require_auth
 def index():
     return render_template('index.html')
+
+
+@app.route('/dashboard', methods=['GET'])
+@require_auth
+def dashboard():
+    uasgs = (UserUasg.query
+             .filter_by(user_id=current_user.id)
+             .order_by(UserUasg.is_primary.desc(), UserUasg.created_at)
+             .all())
+    from src.auth.models import ArpItem, ArpEmpenho
+    uasg_stats = []
+    for u in uasgs:
+        arp_count = u.arps.count()
+        item_count = (db.session.query(db.func.count(ArpItem.id))
+                      .join(Arp, ArpItem.arp_id == Arp.id)
+                      .filter(Arp.user_uasg_id == u.id).scalar()) or 0
+        empenho_count = (db.session.query(db.func.count(ArpEmpenho.id))
+                         .join(ArpItem, ArpEmpenho.arp_item_id == ArpItem.id)
+                         .join(Arp, ArpItem.arp_id == Arp.id)
+                         .filter(Arp.user_uasg_id == u.id).scalar()) or 0
+        uasg_stats.append({
+            'u': u,
+            'arp_count': arp_count,
+            'item_count': item_count,
+            'empenho_count': empenho_count,
+        })
+    searches = (Search.query
+                .filter_by(user_id=current_user.id)
+                .order_by(Search.created_at.desc())
+                .limit(10)
+                .all())
+    return render_template('dashboard.html', uasg_stats=uasg_stats, searches=searches)
+
+
+@app.route('/uasg/<int:uasg_id>', methods=['GET'])
+@require_auth
+def uasg_detail(uasg_id):
+    from src.auth.models import ArpItem
+    u = UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    arps = (Arp.query.filter_by(user_uasg_id=u.id)
+            .order_by(Arp.data_vigencia_inicial.desc().nullslast())
+            .all())
+    arp_data = []
+    for arp in arps:
+        items_with_emps = []
+        for item in arp.items.order_by(ArpItem.numero_item).all():
+            emps = item.empenhos.all()
+            if emps:
+                items_with_emps.append({'item': item, 'emps': emps})
+        arp_data.append({'arp': arp, 'itens': items_with_emps})
+    return render_template('uasg_detail.html', u=u, arp_data=arp_data)
+
+
+@app.route('/uasg/<int:uasg_id>/status', methods=['GET'])
+@require_auth
+def uasg_sync_status(uasg_id):
+    u = UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    return jsonify({
+        'sync_status': u.sync_status,
+        'synced_at': u.synced_at.isoformat() if u.synced_at else None,
+        'arp_count': u.arps.count(),
+        'sync_error': u.sync_error,
+    })
+
+
+@app.route('/uasg/<int:uasg_id>/resync', methods=['POST'])
+@require_auth
+def uasg_resync(uasg_id):
+    u = UserUasg.query.filter_by(id=uasg_id, user_id=current_user.id).first_or_404()
+    from src.tasks import sync_uasg_data
+    u.sync_status = 'pending'
+    u.sync_error = None
+    db.session.commit()
+    sync_uasg_data.delay(u.id, full_refresh=True)
+    referer = request.referrer or ''
+    if '/dashboard' in referer:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('uasg_detail', uasg_id=u.id))
 
 
 # === Searches ===
