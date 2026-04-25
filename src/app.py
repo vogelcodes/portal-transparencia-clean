@@ -125,7 +125,7 @@ def info():
 @app.route('/', methods=['GET'])
 @require_auth
 def index():
-    return render_template('index.html')
+    return redirect(url_for('spav2_shell'))
 
 
 @app.route('/SPA', methods=['GET'])

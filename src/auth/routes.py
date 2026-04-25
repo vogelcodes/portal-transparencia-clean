@@ -28,7 +28,7 @@ def _is_safe_redirect(target: str) -> bool:
     return test.scheme in ('http', 'https') and ref.netloc == test.netloc
 
 
-def _safe_next(default_endpoint: str = 'index') -> str:
+def _safe_next(default_endpoint: str = 'spav2_shell') -> str:
     raw = request.args.get('next')
     if not raw and request.is_json:
         raw = (request.get_json(silent=True) or {}).get('next')
@@ -40,7 +40,7 @@ def _safe_next(default_endpoint: str = 'index') -> str:
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('spav2_shell'))
 
     if request.method == 'GET':
         return render_template('register.html')
@@ -122,7 +122,7 @@ def register():
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('spav2_shell'))
 
     if request.method == 'GET':
         return render_template('login.html')
@@ -190,7 +190,7 @@ def login():
     session['token'] = token
     session['user_id'] = user.id
 
-    next_page = _safe_next('index')
+    next_page = _safe_next('spav2_shell')
 
     if request.is_json:
         return jsonify({
